@@ -2,4 +2,15 @@
 
 import {
   "xz-xuezhe/moonmark/ast",
+  "moonbitlang/core/list",
 }
+
+options(
+  "pre-build": [
+    {
+      "command": "$mod_dir/.mooncakes/moonbitlang/yacc/moonyacc $input -o $output",
+      "input": "parser.mbty",
+      "output": "parser.mbt",
+    },
+  ],
+)

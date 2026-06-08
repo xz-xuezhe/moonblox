@@ -116,6 +116,10 @@ fn args_to_md(args : Map[String, @ast.Value]) -> String {
         } else {
           sb.write_string("false")
         }
+      @ast.Value::Funcall(name, fn_args) => {
+        sb.write_string(name)
+        sb.write_string(args_to_md(fn_args))
+      }
       _ => sb.write_string("...")
     }
   }

@@ -72,6 +72,19 @@ fn directive_end(s : String, start : Int) -> Int? {
 }
 
 ///|
+fn collapse_newlines(s : StringView) -> String {
+  let sb = StringBuilder::new()
+  let len = s.length()
+  for i = 0; i < len; i = i + 1 {
+    match s.get_char(i) {
+      Some('\n') | Some('\r') => sb.write_char(' ')
+      Some(c) => sb.write_char(c)
+      None => ()
+    }
+  }
+  sb.to_string()
+}
+
 fn encode_directives(text : String) -> String {
   let len = text.length()
   let sb = StringBuilder::new()
@@ -84,7 +97,7 @@ fn encode_directives(text : String) -> String {
         let end = directive_end(text, at_pos + 1)
         match end {
           Some(end_pos) => {
-            let directive = text[at_pos + 1:end_pos].to_owned()
+            let directive = collapse_newlines(text[at_pos + 1:end_pos])
             sb.write_string("<!--mm ")
             sb.write_string(directive)
             sb.write_string("-->")
@@ -124,8 +137,12 @@ fn decode_inlines(inlines : Array[@markdown.Inline]) -> Array[@ast.Inline] {
           match @parser.parse_inline_directive(inner) {
             Some((name, args)) =>
               result.push(@ast.Inline::Component(name, args))
-            None =>
-              result.push(@ast.Inline::Markdown(inlines[i]))
+            None => {
+              let text = "@" + inner
+              for j = 0; j < text.length(); j = j + 1 {
+                result.push(wrap_md_text(text[j:j + 1].to_owned()))
+              }
+            }
           }
         } else {
           result.push(@ast.Inline::Markdown(inlines[i]))

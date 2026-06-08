@@ -8,6 +8,10 @@ _build/
 .mooncakes/
 *.mbti
 
+# Generated
+parser/parser.mbt
+parser/parser.mbt.map.json
+
 # AI coding
 .claude/
 CLAUDE.md

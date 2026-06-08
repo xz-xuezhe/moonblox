@@ -8,6 +8,7 @@ pub(all) enum Value {
   Bool(Bool)
   Array(Array[Value])
   Record(Map[String, Value])
+  Funcall(String, Map[String, Value])
 }
 
 // Inline nodes: either standard mdast or our custom component

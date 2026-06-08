@@ -1,0 +1,90 @@
+%derive<Debug, Eq> Token
+%derive<Debug> ParseError
+%position<Int>
+
+%token<String> IDENT
+%token<String> STRING
+%token<Double> NUMBER
+%token<Bool> BOOL
+%token LPAREN "("
+%token RPAREN ")"
+%token LBRACKET "["
+%token RBRACKET "]"
+%token LBRACE "{"
+%token RBRACE "}"
+%token COLON ":"
+%token COMMA ","
+
+%type<(String, Map[String, @ast.Value])> directive
+%type<Map[String, @ast.Value]> args
+%type<Map[String, @ast.Value]> args_opt
+%type<(String, @ast.Value)> arg
+%type<@ast.Value> value
+%type<Array[@ast.Value]> array
+%type<Array[@ast.Value]> values
+%type<Map[String, @ast.Value]> record
+%type<Array[(String, @ast.Value)]> record_fields
+%type<(String, @ast.Value)> record_field
+
+%start directive
+
+%%
+
+directive:
+  | name=IDENT LPAREN args=args_opt RPAREN { (name, args) }
+
+args_opt:
+  | { Map([]) }
+  | args=args { args }
+
+args:
+  | a=arg { let map : Map[String, @ast.Value] = Map([]); map.set(a.0, a.1); map }
+  | a=arg COMMA { let map : Map[String, @ast.Value] = Map([]); map.set(a.0, a.1); map }
+  | a=arg COMMA rest=args { rest.set(a.0, a.1); rest }
+
+arg:
+  | key=IDENT COLON val=value { (key, val) }
+  | val=value { ("_", val) }
+
+value:
+  | s=STRING { @ast.Value::Str(s) }
+  | n=NUMBER { @ast.Value::Number(n) }
+  | b=BOOL { @ast.Value::Bool(b) }
+  | arr=array { @ast.Value::Array(arr) }
+  | rec=record { @ast.Value::Record(rec) }
+  | name=IDENT LPAREN args=args_opt RPAREN {
+    @ast.Value::Funcall(name, args)
+  }
+
+array:
+  | LBRACKET RBRACKET { [] }
+  | LBRACKET vals=values RBRACKET { vals }
+
+values:
+  | v=value { [v] }
+  | v=value COMMA rest=values {
+    let arr : Array[@ast.Value] = [v]
+    for i = 0; i < rest.length(); i = i + 1 { arr.push(rest[i]) }
+    arr
+  }
+
+record:
+  | LBRACE RBRACE { Map([]) }
+  | LBRACE fields=record_fields RBRACE {
+    let map : Map[String, @ast.Value] = Map([])
+    for i = 0; i < fields.length(); i = i + 1 { map.set(fields[i].0, fields[i].1) }
+    map
+  }
+
+record_fields:
+  | f=record_field { [f] }
+  | f=record_field COMMA rest=record_fields {
+    let arr : Array[(String, @ast.Value)] = [f]
+    for i = 0; i < rest.length(); i = i + 1 { arr.push(rest[i]) }
+    arr
+  }
+
+record_field:
+  | key=IDENT COLON val=value { (key, val) }
+
+%%
