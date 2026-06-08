@@ -257,7 +257,9 @@ fn pop_args(s : String, i : Int) -> (Int, Map[String, @ast.Value])? {
 ///|
 /// Parse an inline directive string: name(key: val, ...)
 /// Returns (name, args) on success
-pub fn parse_inline_directive(input : String) -> (String, Map[String, @ast.Value])? {
+pub fn parse_inline_directive(
+  input : String,
+) -> (String, Map[String, @ast.Value])? {
   let len = input.length()
   guard len > 0 else { return None }
   guard pop_name(input, 0) is Some((i, name)) else { return None }
@@ -276,7 +278,9 @@ pub fn parse_inline_directive(input : String) -> (String, Map[String, @ast.Value
 ///|
 /// Parse a container block header: :::name(key: val, ...)
 /// Returns (name, args) on success
-pub fn parse_container_header(input : String) -> (String, Map[String, @ast.Value])? {
+pub fn parse_container_header(
+  input : String,
+) -> (String, Map[String, @ast.Value])? {
   let len = input.length()
   guard len >= 3 else { return None }
   guard input.get_char(0) is Some(':') else { return None }

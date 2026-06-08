@@ -1,1 +1,5 @@
 // MoonMark AST type definitions
+
+import {
+  "mizchi/markdown",
+}

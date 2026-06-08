@@ -3,4 +3,5 @@
 import {
   "xz-xuezhe/moonmark/ast",
   "xz-xuezhe/moonmark/components",
+  "mizchi/markdown",
 }

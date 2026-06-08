@@ -1,7 +1,5 @@
 // MoonMark AST → HTML renderer
 
-// HTML escaping
-
 ///|
 fn escape(s : String) -> String {
   let len = s.length()
@@ -21,43 +19,50 @@ fn escape(s : String) -> String {
   sb.to_string()
 }
 
+// Render mdast inline to HTML
+
 ///|
-fn render_inline(inline : @ast.Inline) -> String {
+fn render_md_inline(inline : @markdown.Inline) -> String {
   match inline {
-    @ast.Inline::Text(s) => escape(s)
-    @ast.Inline::InlineComponent(name, args) =>
-      render_inline_component(name, args)
-    @ast.Inline::Strong(children) => {
-      let sb = StringBuilder::new()
-      sb.write_string("<strong>")
-      sb.write_string(render_inlines(children))
-      sb.write_string("</strong>")
-      sb.to_string()
-    }
-    @ast.Inline::Emphasis(children) => {
-      let sb = StringBuilder::new()
-      sb.write_string("<em>")
-      sb.write_string(render_inlines(children))
-      sb.write_string("</em>")
-      sb.to_string()
-    }
-    @ast.Inline::CodeSpan(code) => {
+    @markdown.Inline::Text(content~, ..) => escape(content)
+    @markdown.Inline::Code(content=code, ..) => {
       let sb = StringBuilder::new()
       sb.write_string("<code>")
       sb.write_string(escape(code))
       sb.write_string("</code>")
       sb.to_string()
     }
-    @ast.Inline::Link(url, _title, children) => {
+    @markdown.Inline::Emphasis(children~, ..) => {
+      let sb = StringBuilder::new()
+      sb.write_string("<em>")
+      sb.write_string(render_md_inlines(children))
+      sb.write_string("</em>")
+      sb.to_string()
+    }
+    @markdown.Inline::Strong(children~, ..) => {
+      let sb = StringBuilder::new()
+      sb.write_string("<strong>")
+      sb.write_string(render_md_inlines(children))
+      sb.write_string("</strong>")
+      sb.to_string()
+    }
+    @markdown.Inline::Strikethrough(children~, ..) => {
+      let sb = StringBuilder::new()
+      sb.write_string("<del>")
+      sb.write_string(render_md_inlines(children))
+      sb.write_string("</del>")
+      sb.to_string()
+    }
+    @markdown.Inline::Link(children~, url~, ..) => {
       let sb = StringBuilder::new()
       sb.write_string("<a href=\"")
       sb.write_string(escape(url))
       sb.write_string("\">")
-      sb.write_string(render_inlines(children))
+      sb.write_string(render_md_inlines(children))
       sb.write_string("</a>")
       sb.to_string()
     }
-    @ast.Inline::Image(url, _title, alt) => {
+    @markdown.Inline::Image(alt~, url~, ..) => {
       let sb = StringBuilder::new()
       sb.write_string("<img src=\"")
       sb.write_string(escape(url))
@@ -66,8 +71,44 @@ fn render_inline(inline : @ast.Inline) -> String {
       sb.write_string("\" />")
       sb.to_string()
     }
-    @ast.Inline::SoftBreak => "\n"
-    @ast.Inline::HardBreak => "<br />\n"
+    @markdown.Inline::Autolink(url~, ..) => {
+      let sb = StringBuilder::new()
+      sb.write_string("<a href=\"")
+      sb.write_string(escape(url))
+      sb.write_string("\">")
+      sb.write_string(escape(url))
+      sb.write_string("</a>")
+      sb.to_string()
+    }
+    @markdown.Inline::SoftBreak(..) => "\n"
+    @markdown.Inline::HardBreak(..) => "<br />\n"
+    @markdown.Inline::WikiLink(target~, label~, ..) => {
+      let display = if label != "" { label } else { target }
+      escape(display)
+    }
+    @markdown.Inline::RefLink(children~, ..) => render_md_inlines(children)
+    @markdown.Inline::HtmlInline(html~, ..) => html
+    @markdown.Inline::RefImage(..) => ""
+    @markdown.Inline::FootnoteReference(..) => ""
+  }
+}
+
+///|
+fn render_md_inlines(inlines : Array[@markdown.Inline]) -> String {
+  let sb = StringBuilder::new()
+  for i = 0; i < inlines.length(); i = i + 1 {
+    sb.write_string(render_md_inline(inlines[i]))
+  }
+  sb.to_string()
+}
+
+// Render our AST Inline (either mdast or component)
+
+///|
+fn render_inline(inline : @ast.Inline) -> String {
+  match inline {
+    @ast.Inline::Markdown(md) => render_md_inline(md)
+    @ast.Inline::Component(name, args) => render_component(name, args)
   }
 }
 
@@ -81,15 +122,14 @@ fn render_inlines(inlines : Array[@ast.Inline]) -> String {
 }
 
 ///|
-fn render_inline_component(
-  name : String,
-  args : Map[String, @ast.Value],
-) -> String {
+fn render_component(name : String, args : Map[String, @ast.Value]) -> String {
   match name {
     "badge" => @components.render_badge(args)
     _ => "<!-- unknown inline component: \{name} -->"
   }
 }
+
+// --- Block rendering (unchanged) ---
 
 ///|
 fn render_block(block : @ast.Block) -> String {

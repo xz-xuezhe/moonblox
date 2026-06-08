@@ -1,10 +1,7 @@
 ///|
 /// Render a callout container component
 /// :::callout(type: "warning", title: "Note")
-pub fn render_callout(
-  args : Map[String, @ast.Value],
-  body : String,
-) -> String {
+pub fn render_callout(args : Map[String, @ast.Value], body : String) -> String {
   let callout_type = match args["type"] {
     @ast.Value::Str(s) => s
     _ => "note"

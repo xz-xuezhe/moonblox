@@ -1,7 +1,7 @@
-// cmark AST → MoonMark AST converter
+// mdast → MoonMark AST converter
 
 import {
   "xz-xuezhe/moonmark/ast",
   "xz-xuezhe/moonmark/parser",
-  "moonbit-community/cmark/cmark",
+  "mizchi/markdown",
 }

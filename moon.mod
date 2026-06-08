@@ -13,6 +13,5 @@ keywords = [ "markdown", "ssg", "static-site-generator" ]
 description = "Markdown-first programmable site generator with MoonBit components"
 
 import {
-  "moonbit-community/cmark@0.4.4",
+  "mizchi/markdown@0.6.2",
 }
-
