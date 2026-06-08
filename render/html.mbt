@@ -190,6 +190,7 @@ pub fn render_document(
   doc : @ast.Document,
   title? : String,
   theme_dir? : String = "theme",
+  scripts? : String = "",
   inline_components? : Map[String, (Map[String, @ast.Value]) -> String] = Map([]),
   container_components? : Map[
     String,
@@ -210,4 +211,5 @@ pub fn render_document(
   .replace(old="{{title}}", new=escape(page_title))
   .replace(old="{{style}}", new=style)
   .replace(old="{{body}}", new=body)
+  .replace(old="{{scripts}}", new=scripts)
 }

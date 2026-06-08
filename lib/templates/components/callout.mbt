@@ -1,25 +1,19 @@
-///|
-/// Render a callout container component
-/// :::callout(type: "warning", title: "Note")
-pub fn render_callout(args : Map[String, @ast.Value], body : String) -> String {
-  let callout_type = match args["type"] {
-    @ast.Value::Str(s) => s
-    _ => "note"
+/// Callout container: :::callout(type: "note", title: "Tip")
+pub(all) struct CalloutProps {
+  type_ : String = "note"
+  title : String = ""
+}
+
+/// Rabbita view with pre-rendered markdown body
+pub fn view(props : CalloutProps, body : String) -> @rabbita.Html {
+  let title_html = if props.title == "" {
+    [] : Array[@rabbita.Html]
+  } else {
+    [@html.div(class="callout__title", [@html.text(props.title)])]
   }
-  let title = match args["title"] {
-    @ast.Value::Str(s) => s
-    _ => ""
-  }
-  let sb = StringBuilder::new()
-  sb.write_string("<div class=\"callout callout--")
-  sb.write_string(callout_type)
-  sb.write_string("\">\n")
-  if title != "" {
-    sb.write_string("<div class=\"callout__title\">")
-    sb.write_string(title)
-    sb.write_string("</div>\n")
-  }
-  sb.write_string(body)
-  sb.write_string("\n</div>")
-  sb.to_string()
+  // Inject pre-rendered HTML body
+  let inner = @html.Attrs::inner_html(@html.Attrs::default(), body)
+  let body_node = @html.node("div", inner, [])
+  let children = title_html + [body_node]
+  @html.div(class="callout callout--\{props.type_}", children)
 }

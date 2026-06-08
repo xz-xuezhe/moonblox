@@ -17,6 +17,8 @@ keywords = [ "markdown", "ssg", "static-site-generator" ]
 
 description = "Markdown-first programmable site generator with MoonBit components"
 
+preferred_target = "native"
+
 options(
   "bin-deps": { "moonbitlang/yacc": "0.7.13" },
 )

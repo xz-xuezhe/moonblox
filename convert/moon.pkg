@@ -4,4 +4,5 @@ import {
   "xz-xuezhe/moonmark/ast",
   "xz-xuezhe/moonmark/parser",
   "mizchi/markdown",
+  "moonbitlang/x/fs",
 }

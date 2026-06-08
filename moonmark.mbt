@@ -16,6 +16,16 @@ pub fn build(
   let input_dir = read_json_field(config_text, "input", "posts")
   let output_dir = read_json_field(config_text, "output", "dist")
   let theme_dir = read_json_field(config_text, "theme", "theme")
+  // Auto-scan components directory
+  let comp_dir = read_json_field(config_text, "components", "components")
+  let discovered = @convert.scan_components(comp_dir)
+  for k in discovered.keys() {
+    let info = discovered[k]
+    let kind = if info.is_container { "container" } else { "inline" }
+    println("Found component: \{k} (\{kind})")
+  }
+  @fs.create_dir("\{output_dir}/components")
+  let scripts = component_scripts(output_dir)
   let posts = @fs.read_dir(input_dir)
   for i = 0; i < posts.length(); i = i + 1 {
     let name = posts[i]
@@ -28,6 +38,7 @@ pub fn build(
         doc,
         title~,
         theme_dir~,
+        scripts~,
         inline_components~,
         container_components~,
       )
@@ -90,4 +101,9 @@ fn String::find_string(self : String, needle : String) -> Int? {
     }
   }
   None
+}
+
+///|
+fn component_scripts(_output_dir : String) -> String {
+  "<script type=\"module\" src=\"components/components.js\"></script>"
 }
