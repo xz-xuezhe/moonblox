@@ -1,215 +1,191 @@
-// MoonBlox AST → HTML renderer
+// MoonBlox AST → rabbita Cell renderer
+
+// --- Inline rendering ---
 
 ///|
-fn escape(s : String) -> String {
-  let len = s.length()
-  let sb = StringBuilder::new()
-  let mut i = 0
-  while i < len {
-    match s.get_char(i) {
-      Some('&') => sb.write_string("&amp;")
-      Some('<') => sb.write_string("&lt;")
-      Some('>') => sb.write_string("&gt;")
-      Some('"') => sb.write_string("&quot;")
-      Some(c) => sb.write_char(c)
-      None => ()
-    }
-    i = i + 1
-  }
-  sb.to_string()
-}
-
-// Batch-render markdown text to inline HTML via md_to_html
-
-///|
-fn inline_md_to_html(md : String) -> String {
-  if md == "" {
-    return ""
-  }
-  let html = @markdown.md_to_html(md)
-  let trimmed = html.trim()
-  if trimmed.has_prefix("<p>") && trimmed.has_suffix("</p>") {
-    trimmed[3:trimmed.length() - 4].to_owned()
-  } else {
-    trimmed.to_owned()
-  }
-}
-
-// Render AST inlines: consecutive Markdown nodes are serialized back
-// to markdown and rendered in one batch via md_to_html; component nodes
-// are rendered individually and flush the batch.
-
-///|
+/// Batch consecutive Markdown inlines → serialize to markdown →
+/// render via md_to_html → inject as inner_html span.
+/// Component inlines break the batch and render individually.
 fn render_inlines(
   inlines : Array[@ast.Inline],
-  inline_components : Map[String, (Map[String, @ast.Value]) -> String],
-) -> String {
-  let sb = StringBuilder::new()
-  let mut md_batch = StringBuilder::new()
+  inline_cells : Map[String, (Map[String, @ast.Value]) -> @rabbita.Cell],
+) -> Array[@rabbita.Html] {
+  let result : Array[@rabbita.Html] = []
+  let mut batch : Array[@markdown.Inline] = []
   for i = 0; i < inlines.length(); i = i + 1 {
     match inlines[i] {
-      @ast.Inline::Markdown(md) =>
-        md_batch.write_string(@convert.inline_to_md(md))
+      @ast.Inline::Markdown(md) => batch.push(md)
       @ast.Inline::Component(name, args) => {
-        sb.write_string(inline_md_to_html(md_batch.to_string()))
-        md_batch = StringBuilder::new()
-        sb.write_string(render_inline_component(name, args, inline_components))
+        flush_md_batch(result, batch)
+        batch = []
+        match inline_cells.get(name) {
+          Some(cell_fn) => result.push(cell_fn(args).view())
+          None => {
+            let msg = "<!-- unknown inline: \{name} -->"
+            let attrs = @html.Attrs::build().inner_html(msg)
+            let empty : Array[@rabbita.Html] = []
+            result.push(@html.span(attrs~, empty))
+          }
+        }
       }
     }
   }
-  sb.write_string(inline_md_to_html(md_batch.to_string()))
-  sb.to_string()
+  flush_md_batch(result, batch)
+  result
 }
 
 ///|
-fn render_inline_component(
-  name : String,
-  args : Map[String, @ast.Value],
-  components : Map[String, (Map[String, @ast.Value]) -> String],
-) -> String {
-  match components.get(name) {
-    Some(render) => render(args)
-    None => "<!-- unknown inline component: \{name} -->"
+fn flush_md_batch(
+  result : Array[@rabbita.Html],
+  batch : Array[@markdown.Inline],
+) -> Unit {
+  if batch.length() == 0 {
+    return
   }
+  let sb = StringBuilder::new()
+  for i = 0; i < batch.length(); i = i + 1 {
+    sb.write_string(@convert.inline_to_md(batch[i]))
+  }
+  let html = @markdown.md_to_html(sb.to_string()).trim()
+  let inner = if html.has_prefix("<p>") && html.has_suffix("</p>") {
+    html[3:html.length() - 4].to_owned()
+  } else {
+    html.to_owned()
+  }
+  let attrs = @html.Attrs::build().inner_html(inner)
+  let empty : Array[@rabbita.Html] = []
+  result.push(@html.span(attrs~, empty))
 }
 
-///|
-fn render_container_component(
-  name : String,
-  args : Map[String, @ast.Value],
-  body : String,
-  components : Map[String, (Map[String, @ast.Value], String) -> String],
-) -> String {
-  match components.get(name) {
-    Some(render) => render(args, body)
-    None => "<!-- unknown container: \{name} -->\{body}"
-  }
-}
-
-// --- Block rendering (unchanged) ---
+// --- Block rendering ---
 
 ///|
 fn render_block(
   block : @ast.Block,
-  inlines : Map[String, (Map[String, @ast.Value]) -> String],
-  containers : Map[String, (Map[String, @ast.Value], String) -> String],
-) -> String {
+  inline_cells : Map[String, (Map[String, @ast.Value]) -> @rabbita.Cell],
+  container_cells : Map[
+    String,
+    (Map[String, @ast.Value], String) -> @rabbita.Cell,
+  ],
+) -> @rabbita.Cell {
   match block {
-    @ast.Block::Paragraph(p) => {
-      let sb = StringBuilder::new()
-      sb.write_string("<p>")
-      sb.write_string(render_inlines(p.children, inlines))
-      sb.write_string("</p>")
-      sb.to_string()
-    }
-    @ast.Block::Heading(h) => {
-      let sb = StringBuilder::new()
-      sb.write_string("<h")
-      sb.write_string(h.level.to_string())
-      sb.write_string(">")
-      sb.write_string(render_inlines(h.children, inlines))
-      sb.write_string("</h")
-      sb.write_string(h.level.to_string())
-      sb.write_string(">")
-      sb.to_string()
-    }
-    @ast.Block::CodeBlock(cb) => {
-      let sb = StringBuilder::new()
-      match cb.info {
-        Some(lang) => {
-          sb.write_string("<pre><code class=\"language-")
-          sb.write_string(escape(lang))
-          sb.write_string("\">")
-        }
-        None => sb.write_string("<pre><code>")
-      }
-      sb.write_string(escape(cb.content))
-      sb.write_string("</code></pre>")
-      sb.to_string()
-    }
-    @ast.Block::ContainerComponent(cc) => {
-      let body = render_blocks(cc.children, inlines, containers)
-      render_container_component(cc.name, cc.args, body, containers)
-    }
+    @ast.Block::Paragraph(p) =>
+      @rabbita.static_cell(@html.p(render_inlines(p.children, inline_cells)))
+    @ast.Block::Heading(h) =>
+      @rabbita.static_cell(render_heading(h.level, h.children, inline_cells))
+    @ast.Block::CodeBlock(cb) => @rabbita.static_cell(render_code_block(cb))
+    @ast.Block::ContainerComponent(cc) =>
+      render_container(cc, inline_cells, container_cells)
     @ast.Block::BlockQuote(children) => {
-      let sb = StringBuilder::new()
-      sb.write_string("<blockquote>\n")
-      sb.write_string(render_blocks(children, inlines, containers))
-      sb.write_string("</blockquote>")
-      sb.to_string()
-    }
-    @ast.Block::List(lst) => {
-      let sb = StringBuilder::new()
-      if lst.tight {
-        sb.write_string("<ul class=\"tight\">\n")
-      } else {
-        sb.write_string("<ul>\n")
+      let kids : Array[@rabbita.Html] = []
+      for i = 0; i < children.length(); i = i + 1 {
+        kids.push(
+          render_block(children[i], inline_cells, container_cells).view(),
+        )
       }
-      sb.write_string(render_list_items(lst.items, inlines, containers))
-      sb.write_string("</ul>")
-      sb.to_string()
+      @rabbita.static_cell(@html.blockquote(kids))
     }
-    @ast.Block::ThematicBreak => "<hr />\n"
+    @ast.Block::List(lst) =>
+      @rabbita.static_cell(render_list(lst, inline_cells, container_cells))
+    @ast.Block::ThematicBreak => @rabbita.static_cell(@html.hr())
   }
 }
 
 ///|
-fn render_blocks(
-  blocks : Array[@ast.Block],
-  inlines : Map[String, (Map[String, @ast.Value]) -> String],
-  containers : Map[String, (Map[String, @ast.Value], String) -> String],
-) -> String {
+fn render_heading(
+  level : Int,
+  inlines : Array[@ast.Inline],
+  inline_cells : Map[String, (Map[String, @ast.Value]) -> @rabbita.Cell],
+) -> @rabbita.Html {
+  let kids = render_inlines(inlines, inline_cells)
+  match level {
+    1 => @html.h1(kids)
+    2 => @html.h2(kids)
+    3 => @html.h3(kids)
+    4 => @html.h4(kids)
+    5 => @html.h5(kids)
+    _ => @html.h6(kids)
+  }
+}
+
+///|
+fn render_code_block(cb : @ast.BlockCode) -> @rabbita.Html {
+  match cb.info {
+    Some(lang) =>
+      @html.pre([@html.code(class="language-\{lang}", [@html.text(cb.content)])])
+    None => @html.pre([@html.code([@html.text(cb.content)])])
+  }
+}
+
+///|
+fn render_container(
+  cc : @ast.BlockContainer,
+  inline_cells : Map[String, (Map[String, @ast.Value]) -> @rabbita.Cell],
+  container_cells : Map[
+    String,
+    (Map[String, @ast.Value], String) -> @rabbita.Cell,
+  ],
+) -> @rabbita.Cell {
   let sb = StringBuilder::new()
-  for i = 0; i < blocks.length(); i = i + 1 {
-    sb.write_string(render_block(blocks[i], inlines, containers))
-    sb.write_char('\n')
+  for i = 0; i < cc.children.length(); i = i + 1 {
+    if i > 0 {
+      sb.write_char('\n')
+    }
+    let child_cell = render_block(cc.children[i], inline_cells, container_cells)
+    sb.write_string(@rabbita.render_to_string(child_cell))
   }
-  sb.to_string()
+  let body = sb.to_string()
+  match container_cells.get(cc.name) {
+    Some(cell_fn) => cell_fn(cc.args, body)
+    None => {
+      let empty : Array[@rabbita.Html] = []
+      @rabbita.static_cell(
+        @html.div(attrs=@html.Attrs::build().inner_html(body), empty),
+      )
+    }
+  }
 }
 
 ///|
-fn render_list_items(
-  items : Array[@ast.ListItem],
-  inlines : Map[String, (Map[String, @ast.Value]) -> String],
-  containers : Map[String, (Map[String, @ast.Value], String) -> String],
-) -> String {
-  let sb = StringBuilder::new()
-  for i = 0; i < items.length(); i = i + 1 {
-    sb.write_string("<li>")
-    sb.write_string(render_blocks(items[i].children, inlines, containers))
-    sb.write_string("</li>\n")
+fn render_list(
+  lst : @ast.BlockList,
+  inline_cells : Map[String, (Map[String, @ast.Value]) -> @rabbita.Cell],
+  container_cells : Map[
+    String,
+    (Map[String, @ast.Value], String) -> @rabbita.Cell,
+  ],
+) -> @rabbita.Html {
+  let items : Array[@rabbita.Html] = []
+  for i = 0; i < lst.items.length(); i = i + 1 {
+    let item = lst.items[i]
+    let kids : Array[@rabbita.Html] = []
+    for j = 0; j < item.children.length(); j = j + 1 {
+      kids.push(
+        render_block(item.children[j], inline_cells, container_cells).view(),
+      )
+    }
+    items.push(@html.li(kids))
   }
-  sb.to_string()
+  @html.ul(items)
 }
 
+// --- Document rendering ---
+
 ///|
-/// Render a MoonBlox Document to a complete HTML page.
-/// Reads theme/style.css and theme/page.html from the given directory.
-/// Component maps map component names to user-provided render functions.
+/// Build a Cell tree for the document body.
 pub fn render_document(
   doc : @ast.Document,
-  title? : String,
-  theme_dir? : String = "theme",
-  scripts? : String = "",
-  inline_components? : Map[String, (Map[String, @ast.Value]) -> String] = Map([]),
-  container_components? : Map[
+  inline_cells? : Map[String, (Map[String, @ast.Value]) -> @rabbita.Cell] = Map([],
+  ),
+  container_cells? : Map[
     String,
-    (Map[String, @ast.Value], String) -> String,
+    (Map[String, @ast.Value], String) -> @rabbita.Cell,
   ] = Map([]),
-) -> String raise {
-  let body = render_blocks(
-    doc.children,
-    inline_components,
-    container_components,
-  )
-  let page_title = title.unwrap_or("Document")
-  let css_path = "\{theme_dir}/style.css"
-  let html_path = "\{theme_dir}/page.html"
-  let style = @fs.read_file_to_string(css_path)
-  let template = @fs.read_file_to_string(html_path)
-  template
-  .replace(old="{{title}}", new=escape(page_title))
-  .replace(old="{{style}}", new=style)
-  .replace(old="{{body}}", new=body)
-  .replace(old="{{scripts}}", new=scripts)
+) -> @rabbita.Cell {
+  let children : Array[@rabbita.Html] = []
+  for i = 0; i < doc.children.length(); i = i + 1 {
+    let cell = render_block(doc.children[i], inline_cells, container_cells)
+    children.push(cell.view())
+  }
+  @rabbita.static_cell(@html.div(children))
 }

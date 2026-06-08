@@ -1,0 +1,10 @@
+{
+  "name": "xz-xuezhe/moonblox-build",
+  "deps": {
+    "xz-xuezhe/moonblox": { "path": "../.." },
+    "moonbitlang/x": "0.4.45",
+    "moonbitlang/async": "0.17.0"
+  },
+  "source": ".",
+  "preferred-target": "native"
+}

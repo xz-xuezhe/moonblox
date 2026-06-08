@@ -1,10 +1,10 @@
-/// Badge inline component: @badge(text: "experimental", tone: "warning")
 pub(all) struct BadgeProps {
   text : String
-  tone : String = "default"
+  tone : String
 }
 
-/// Rabbita view
-pub fn view(props : BadgeProps) -> @rabbita.Html {
-  @html.span(class="badge badge--\{props.tone}", [@html.text(props.text)])
+pub fn badge_cell(args : Map[String, @ast.Value]) -> @rabbita.Cell {
+  let text = match args.get("text") { Some(@ast.Value::Str(s)) => s; _ => "" }
+  let tone = match args.get("tone") { Some(@ast.Value::Str(s)) => s; _ => "default" }
+  @rabbita.static_cell(@html.span(class="badge badge--\{tone}", [@html.text(text)]))
 }

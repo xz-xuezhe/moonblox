@@ -1,8 +1,3 @@
 // MoonBlox root package — public API entry point
 
-import {
-  "xz-xuezhe/moonblox/ast",
-  "xz-xuezhe/moonblox/convert",
-  "xz-xuezhe/moonblox/render",
-  "moonbitlang/x/fs",
-}
+supported_targets = "js+native"

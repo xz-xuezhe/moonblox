@@ -11,8 +11,8 @@ _build/
 # Generated
 parser/parser.mbt
 parser/parser.mbt.map.json
-render/page_html.mbt
-render/style_css.mbt
+cmd/init/*_template.mbt
+cmd/init/*_html.mbt
 
 # AI coding
 .claude/

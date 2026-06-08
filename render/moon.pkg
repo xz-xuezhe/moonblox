@@ -1,8 +1,11 @@
-// MoonBlox HTML renderer
+// MoonBlox Cell tree renderer
 
 import {
   "xz-xuezhe/moonblox/ast",
   "xz-xuezhe/moonblox/convert",
   "mizchi/markdown",
-  "moonbitlang/x/fs",
+  "moonbit-community/rabbita",
+  "moonbit-community/rabbita/html",
 }
+
+supported_targets = "js+native"

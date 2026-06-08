@@ -1,0 +1,11 @@
+{
+  "name": "xz-xuezhe/moonblox-scanner",
+  "version": "0.1.0",
+  "deps": {
+    "xz-xuezhe/moonblox": {
+      "path": "../.."
+    },
+    "moonbitlang/x": "0.4.45"
+  },
+  "source": "."
+}

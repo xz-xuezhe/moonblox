@@ -3,6 +3,35 @@ import {
   "moonbitlang/x/fs",
 }
 
+supported_targets = "native"
+
 options(
   "is-main": true,
+  "pre-build": [
+    {
+      "command": ":embed -i $input -o $output --name css_template",
+      "input": "../../lib/templates/theme/style.css",
+      "output": "css_template.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name index_html",
+      "input": "../../lib/templates/index.html",
+      "output": "index_html.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name badge_template",
+      "input": "../../lib/templates/components/badge.mbt",
+      "output": "badge_template.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name callout_template",
+      "input": "../../lib/templates/components/callout.mbt",
+      "output": "callout_template.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name counter_template",
+      "input": "../../lib/templates/components/counter.mbt",
+      "output": "counter_template.mbt",
+    },
+  ],
 )

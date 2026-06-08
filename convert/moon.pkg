@@ -4,5 +4,6 @@ import {
   "xz-xuezhe/moonblox/ast",
   "xz-xuezhe/moonblox/parser",
   "mizchi/markdown",
-  "moonbitlang/x/fs",
 }
+
+supported_targets = "js+native"
