@@ -2,14 +2,17 @@
 // Encoded as HTML comments so markdown parser treats directive content
 // as raw text, naturally protected from emphasis/code span interference.
 
+///|
 fn is_name_start(c : Char) -> Bool {
   (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
 }
 
+///|
 fn is_name_char(c : Char) -> Bool {
   is_name_start(c) || (c >= '0' && c <= '9') || c == '_' || c == '-'
 }
 
+///|
 fn find_at(s : String, start : Int) -> Int? {
   let len = s.length()
   for i = start; i < len; i = i + 1 {
@@ -27,6 +30,7 @@ fn find_at(s : String, start : Int) -> Int? {
   None
 }
 
+///|
 fn directive_end(s : String, start : Int) -> Int? {
   let len = s.length()
   let mut i = start
@@ -85,6 +89,7 @@ fn collapse_newlines(s : StringView) -> String {
   sb.to_string()
 }
 
+///|
 fn encode_directives(text : String) -> String {
   let len = text.length()
   let sb = StringBuilder::new()
@@ -125,11 +130,12 @@ fn parse_inline_content(text : String) -> Array[@ast.Inline] {
   decode_inlines(md_inlines)
 }
 
+///|
 fn decode_inlines(inlines : Array[@markdown.Inline]) -> Array[@ast.Inline] {
   let result : Array[@ast.Inline] = []
   for i = 0; i < inlines.length(); i = i + 1 {
     match inlines[i] {
-      @markdown.Inline::HtmlInline(html=html, ..) =>
+      @markdown.Inline::HtmlInline(html~, ..) =>
         if html.has_prefix("<!--mm ") && html.has_suffix("-->") {
           let start = "<!--mm ".length()
           let end = html.length() - "-->".length()

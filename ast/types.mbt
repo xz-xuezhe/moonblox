@@ -1,6 +1,7 @@
 // MoonMark AST type definitions
 
 // Component argument values
+
 ///|
 pub(all) enum Value {
   Str(String)

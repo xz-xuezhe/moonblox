@@ -1,6 +1,7 @@
 // mdast Block → MoonMark Block conversion + container block detection
 
 // Extract inline text from a block's span in the source, strip trailing \n
+///|
 fn raw_span_text(source : String, span : @markdown.Span) -> String {
   let raw = source[span.from:span.to].to_owned()
   let len = raw.length()
@@ -19,6 +20,7 @@ fn parse_span_inlines(
   parse_inline_content(raw_span_text(source, span))
 }
 
+///|
 fn strip_atx_prefix(raw : String, level : Int) -> String {
   let len = raw.length()
   let mut i = 0
@@ -35,6 +37,7 @@ fn strip_atx_prefix(raw : String, level : Int) -> String {
   }
 }
 
+///|
 fn strip_setext_suffix(raw : String) -> String {
   let len = raw.length()
   let mut end = len

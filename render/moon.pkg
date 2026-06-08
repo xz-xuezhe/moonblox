@@ -6,3 +6,18 @@ import {
   "xz-xuezhe/moonmark/convert",
   "mizchi/markdown",
 }
+
+options(
+  "pre-build": [
+    {
+      "command": ":embed -i $input -o $output --name style_css",
+      "input": "../theme/style.css",
+      "output": "style_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name page_html",
+      "input": "../theme/page.html",
+      "output": "page_html.mbt",
+    },
+  ],
+)

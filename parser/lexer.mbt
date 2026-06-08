@@ -1,5 +1,6 @@
 // Lexer: tokenize a directive string into (Token, start, end) tuples
 
+///|
 fn is_name_char(c : Char) -> Bool {
   (c >= 'a' && c <= 'z') ||
   (c >= 'A' && c <= 'Z') ||
@@ -8,10 +9,12 @@ fn is_name_char(c : Char) -> Bool {
   c == '-'
 }
 
+///|
 fn is_digit(c : Char) -> Bool {
   c >= '0' && c <= '9'
 }
 
+///|
 fn skip_spaces(s : String, i : Int) -> Int {
   let len = s.length()
   let mut j = i
@@ -24,6 +27,7 @@ fn skip_spaces(s : String, i : Int) -> Int {
   j
 }
 
+///|
 fn lex_string(s : String, start : Int) -> (String, Int)? {
   let len = s.length()
   guard start < len else { return None }
@@ -40,6 +44,7 @@ fn lex_string(s : String, start : Int) -> (String, Int)? {
   None
 }
 
+///|
 fn lex_number(s : String, start : Int) -> (Double, Int)? {
   let len = s.length()
   let mut j = start
@@ -51,7 +56,10 @@ fn lex_number(s : String, start : Int) -> (Double, Int)? {
   while j < len {
     match s.get_char(j) {
       Some(c) if is_digit(c) => j = j + 1
-      Some('.') if !has_dot => { has_dot = true; j = j + 1 }
+      Some('.') if !has_dot => {
+        has_dot = true
+        j = j + 1
+      }
       _ => break
     }
   }
@@ -61,7 +69,10 @@ fn lex_number(s : String, start : Int) -> (Double, Int)? {
   let mut in_frac = false
   let mut k = start
   let sign = match s.get_char(k) {
-    Some('-') => { k = k + 1; -1.0 }
+    Some('-') => {
+      k = k + 1
+      -1.0
+    }
     _ => 1.0
   }
   while k < j {
@@ -83,6 +94,7 @@ fn lex_number(s : String, start : Int) -> (Double, Int)? {
   Some((result * sign, j))
 }
 
+///|
 fn lex_name(s : String, start : Int) -> (String, Int) {
   let len = s.length()
   let mut j = start
@@ -95,6 +107,7 @@ fn lex_name(s : String, start : Int) -> (String, Int) {
   (s[start:j].to_owned(), j)
 }
 
+///|
 /// Tokenize a directive string into parser-compatible token array
 pub fn tokenize(input : String) -> Array[(Token, Int, Int)] {
   let len = input.length()
@@ -103,26 +116,54 @@ pub fn tokenize(input : String) -> Array[(Token, Int, Int)] {
   while i < len {
     let start = i
     match input.get_char(i) {
-      Some('(') => { tokens.push((Token::LPAREN, start, start + 1)); i = i + 1 }
-      Some(')') => { tokens.push((Token::RPAREN, start, start + 1)); i = i + 1 }
-      Some('[') => { tokens.push((Token::LBRACKET, start, start + 1)); i = i + 1 }
-      Some(']') => { tokens.push((Token::RBRACKET, start, start + 1)); i = i + 1 }
-      Some('{') => { tokens.push((Token::LBRACE, start, start + 1)); i = i + 1 }
-      Some('}') => { tokens.push((Token::RBRACE, start, start + 1)); i = i + 1 }
-      Some(':') => { tokens.push((Token::COLON, start, start + 1)); i = i + 1 }
-      Some(',') => { tokens.push((Token::COMMA, start, start + 1)); i = i + 1 }
-      Some('"') => {
+      Some('(') => {
+        tokens.push((Token::LPAREN, start, start + 1))
+        i = i + 1
+      }
+      Some(')') => {
+        tokens.push((Token::RPAREN, start, start + 1))
+        i = i + 1
+      }
+      Some('[') => {
+        tokens.push((Token::LBRACKET, start, start + 1))
+        i = i + 1
+      }
+      Some(']') => {
+        tokens.push((Token::RBRACKET, start, start + 1))
+        i = i + 1
+      }
+      Some('{') => {
+        tokens.push((Token::LBRACE, start, start + 1))
+        i = i + 1
+      }
+      Some('}') => {
+        tokens.push((Token::RBRACE, start, start + 1))
+        i = i + 1
+      }
+      Some(':') => {
+        tokens.push((Token::COLON, start, start + 1))
+        i = i + 1
+      }
+      Some(',') => {
+        tokens.push((Token::COMMA, start, start + 1))
+        i = i + 1
+      }
+      Some('"') =>
         match lex_string(input, i) {
-          Some((s, next)) => { tokens.push((Token::STRING(s), start, next)); i = next }
+          Some((s, next)) => {
+            tokens.push((Token::STRING(s), start, next))
+            i = next
+          }
           None => break
         }
-      }
-      Some(c) if is_digit(c) || c == '-' => {
+      Some(c) if is_digit(c) || c == '-' =>
         match lex_number(input, i) {
-          Some((n, next)) => { tokens.push((Token::NUMBER(n), start, next)); i = next }
+          Some((n, next)) => {
+            tokens.push((Token::NUMBER(n), start, next))
+            i = next
+          }
           None => break
         }
-      }
       Some(c) if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') => {
         let (name, next) = lex_name(input, i)
         // Check for true/false

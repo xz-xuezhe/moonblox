@@ -20,6 +20,8 @@ fn escape(s : String) -> String {
 }
 
 // Batch-render markdown text to inline HTML via md_to_html
+
+///|
 fn inline_md_to_html(md : String) -> String {
   if md == "" {
     return ""
@@ -36,6 +38,8 @@ fn inline_md_to_html(md : String) -> String {
 // Render AST inlines: consecutive Markdown nodes are serialized back
 // to markdown and rendered in one batch via md_to_html; component nodes
 // are rendered individually and flush the batch.
+
+///|
 fn render_inlines(inlines : Array[@ast.Inline]) -> String {
   let sb = StringBuilder::new()
   let mut md_batch = StringBuilder::new()
@@ -46,7 +50,7 @@ fn render_inlines(inlines : Array[@ast.Inline]) -> String {
       @ast.Inline::Component(name, args) => {
         sb.write_string(inline_md_to_html(md_batch.to_string()))
         md_batch = StringBuilder::new()
-        sb.write_string(render_component(name, args))
+        sb.write_string(render_inline_component(name, args))
       }
     }
   }
@@ -55,11 +59,11 @@ fn render_inlines(inlines : Array[@ast.Inline]) -> String {
 }
 
 ///|
-fn render_component(name : String, args : Map[String, @ast.Value]) -> String {
-  match name {
-    "badge" => @components.render_badge(args)
-    _ => "<!-- unknown inline component: \{name} -->"
-  }
+fn render_inline_component(
+  name : String,
+  args : Map[String, @ast.Value],
+) -> String {
+  @components.render_inline(name, args)
 }
 
 // --- Block rendering (unchanged) ---
@@ -101,17 +105,7 @@ fn render_block(block : @ast.Block) -> String {
     }
     @ast.Block::ContainerComponent(cc) => {
       let body = render_blocks(cc.children)
-      match cc.name {
-        "callout" => @components.render_callout(cc.args, body)
-        _ => {
-          let sb = StringBuilder::new()
-          sb.write_string("<!-- unknown container: ")
-          sb.write_string(cc.name)
-          sb.write_string(" -->")
-          sb.write_string(body)
-          sb.to_string()
-        }
-      }
+      @components.render_container(cc.name, cc.args, body)
     }
     @ast.Block::BlockQuote(children) => {
       let sb = StringBuilder::new()
@@ -161,60 +155,9 @@ fn render_list_items(items : Array[@ast.ListItem]) -> String {
 pub fn render_document(doc : @ast.Document, title? : String) -> String {
   let body = render_blocks(doc.children)
   let page_title = title.unwrap_or("Document")
-  let sb = StringBuilder::new()
-  sb.write_string("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n")
-  sb.write_string("  <meta charset=\"UTF-8\">\n")
-  sb.write_string(
-    "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n",
-  )
-  sb.write_string("  <title>")
-  sb.write_string(escape(page_title))
-  sb.write_string("</title>\n")
-  sb.write_string("  <style>\n")
-  sb.write_string(
-    "    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; line-height: 1.6; }\n",
-  )
-  sb.write_string(
-    "    .badge { display: inline-block; padding: 0.1em 0.5em; border-radius: 4px; font-size: 0.85em; font-weight: 600; }\n",
-  )
-  sb.write_string("    .badge--default { background: #e5e5e5; color: #333; }\n")
-  sb.write_string(
-    "    .badge--warning { background: #fff3cd; color: #856404; }\n",
-  )
-  sb.write_string("    .badge--info { background: #d1ecf1; color: #0c5460; }\n")
-  sb.write_string(
-    "    .badge--success { background: #d4edda; color: #155724; }\n",
-  )
-  sb.write_string(
-    "    .badge--error { background: #f8d7da; color: #721c24; }\n",
-  )
-  sb.write_string(
-    "    .callout { border-left: 4px solid; padding: 1rem; margin: 1rem 0; border-radius: 4px; }\n",
-  )
-  sb.write_string(
-    "    .callout--note { border-color: #007bff; background: #f0f7ff; }\n",
-  )
-  sb.write_string(
-    "    .callout--warning { border-color: #ffc107; background: #fffdf0; }\n",
-  )
-  sb.write_string(
-    "    .callout--tip { border-color: #28a745; background: #f0fff4; }\n",
-  )
-  sb.write_string(
-    "    .callout--error { border-color: #dc3545; background: #fff5f5; }\n",
-  )
-  sb.write_string(
-    "    .callout__title { font-weight: 700; margin-bottom: 0.5rem; }\n",
-  )
-  sb.write_string(
-    "    pre { background: #f5f5f5; padding: 1rem; border-radius: 4px; overflow-x: auto; }\n",
-  )
-  sb.write_string(
-    "    code { background: #f0f0f0; padding: 0.2em 0.4em; border-radius: 3px; font-size: 0.9em; }\n",
-  )
-  sb.write_string("    pre code { background: none; padding: 0; }\n")
-  sb.write_string("  </style>\n</head>\n<body>\n")
-  sb.write_string(body)
-  sb.write_string("\n</body>\n</html>\n")
-  sb.to_string()
+  let html = page_html
+    .replace(old="{{title}}", new=escape(page_title))
+    .replace(old="{{style}}", new=style_css)
+    .replace(old="{{body}}", new=body)
+  html
 }
