@@ -1,6 +1,4 @@
 import {
-  "xz-xuezhe/moonmark/convert",
-  "xz-xuezhe/moonmark/render",
   "moonbitlang/core/env",
   "moonbitlang/x/fs",
 }

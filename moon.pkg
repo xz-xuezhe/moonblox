@@ -1,8 +1,8 @@
-// MoonMark HTML renderer
+// MoonMark root package — public API entry point
 
 import {
   "xz-xuezhe/moonmark/ast",
   "xz-xuezhe/moonmark/convert",
-  "mizchi/markdown",
+  "xz-xuezhe/moonmark/render",
   "moonbitlang/x/fs",
 }

@@ -1,6 +1,7 @@
 // mdast Block → MoonMark Block conversion + container block detection
 
 // Extract inline text from a block's span in the source, strip trailing \n
+
 ///|
 fn raw_span_text(source : String, span : @markdown.Span) -> String {
   let raw = source[span.from:span.to].to_owned()
