@@ -19,105 +19,38 @@ fn escape(s : String) -> String {
   sb.to_string()
 }
 
-// Render mdast inline to HTML
-
-///|
-fn render_md_inline(inline : @markdown.Inline) -> String {
-  match inline {
-    @markdown.Inline::Text(content~, ..) => escape(content)
-    @markdown.Inline::Code(content=code, ..) => {
-      let sb = StringBuilder::new()
-      sb.write_string("<code>")
-      sb.write_string(escape(code))
-      sb.write_string("</code>")
-      sb.to_string()
-    }
-    @markdown.Inline::Emphasis(children~, ..) => {
-      let sb = StringBuilder::new()
-      sb.write_string("<em>")
-      sb.write_string(render_md_inlines(children))
-      sb.write_string("</em>")
-      sb.to_string()
-    }
-    @markdown.Inline::Strong(children~, ..) => {
-      let sb = StringBuilder::new()
-      sb.write_string("<strong>")
-      sb.write_string(render_md_inlines(children))
-      sb.write_string("</strong>")
-      sb.to_string()
-    }
-    @markdown.Inline::Strikethrough(children~, ..) => {
-      let sb = StringBuilder::new()
-      sb.write_string("<del>")
-      sb.write_string(render_md_inlines(children))
-      sb.write_string("</del>")
-      sb.to_string()
-    }
-    @markdown.Inline::Link(children~, url~, ..) => {
-      let sb = StringBuilder::new()
-      sb.write_string("<a href=\"")
-      sb.write_string(escape(url))
-      sb.write_string("\">")
-      sb.write_string(render_md_inlines(children))
-      sb.write_string("</a>")
-      sb.to_string()
-    }
-    @markdown.Inline::Image(alt~, url~, ..) => {
-      let sb = StringBuilder::new()
-      sb.write_string("<img src=\"")
-      sb.write_string(escape(url))
-      sb.write_string("\" alt=\"")
-      sb.write_string(escape(alt))
-      sb.write_string("\" />")
-      sb.to_string()
-    }
-    @markdown.Inline::Autolink(url~, ..) => {
-      let sb = StringBuilder::new()
-      sb.write_string("<a href=\"")
-      sb.write_string(escape(url))
-      sb.write_string("\">")
-      sb.write_string(escape(url))
-      sb.write_string("</a>")
-      sb.to_string()
-    }
-    @markdown.Inline::SoftBreak(..) => "\n"
-    @markdown.Inline::HardBreak(..) => "<br />\n"
-    @markdown.Inline::WikiLink(target~, label~, ..) => {
-      let display = if label != "" { label } else { target }
-      escape(display)
-    }
-    @markdown.Inline::RefLink(children~, ..) => render_md_inlines(children)
-    @markdown.Inline::HtmlInline(html~, ..) => html
-    @markdown.Inline::RefImage(..) => ""
-    @markdown.Inline::FootnoteReference(..) => ""
+// Batch-render markdown text to inline HTML via md_to_html
+fn inline_md_to_html(md : String) -> String {
+  if md == "" {
+    return ""
+  }
+  let html = @markdown.md_to_html(md)
+  let trimmed = html.trim()
+  if trimmed.has_prefix("<p>") && trimmed.has_suffix("</p>") {
+    trimmed[3:trimmed.length() - 4].to_owned()
+  } else {
+    trimmed.to_owned()
   }
 }
 
-///|
-fn render_md_inlines(inlines : Array[@markdown.Inline]) -> String {
-  let sb = StringBuilder::new()
-  for i = 0; i < inlines.length(); i = i + 1 {
-    sb.write_string(render_md_inline(inlines[i]))
-  }
-  sb.to_string()
-}
-
-// Render our AST Inline (either mdast or component)
-
-///|
-fn render_inline(inline : @ast.Inline) -> String {
-  match inline {
-    @ast.Inline::Markdown(md) => render_md_inline(md)
-    @ast.Inline::Component(name, args) => render_component(name, args)
-  }
-}
-
-///|
+// Render AST inlines: consecutive Markdown nodes are serialized back
+// to markdown and rendered in one batch via md_to_html; component nodes
+// are rendered individually and flush the batch.
 fn render_inlines(inlines : Array[@ast.Inline]) -> String {
   let sb = StringBuilder::new()
+  let mut md_batch = StringBuilder::new()
   for i = 0; i < inlines.length(); i = i + 1 {
-    sb.write_string(render_inline(inlines[i]))
+    match inlines[i] {
+      @ast.Inline::Markdown(md) =>
+        md_batch.write_string(@convert.inline_to_md(md))
+      @ast.Inline::Component(name, args) => {
+        sb.write_string(inline_md_to_html(md_batch.to_string()))
+        md_batch = StringBuilder::new()
+        sb.write_string(render_component(name, args))
+      }
+    }
   }
+  sb.write_string(inline_md_to_html(md_batch.to_string()))
   sb.to_string()
 }
 

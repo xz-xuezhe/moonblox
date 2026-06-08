@@ -3,5 +3,6 @@
 import {
   "xz-xuezhe/moonmark/ast",
   "xz-xuezhe/moonmark/components",
+  "xz-xuezhe/moonmark/convert",
   "mizchi/markdown",
 }
