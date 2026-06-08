@@ -45,7 +45,6 @@ fn scaffold(dir : String) -> Unit raise {
   write(dir, "moonblox.json", config_content())
   write(dir, "posts/index.md", sample_content())
 
-  // Components in sub-package
   write(dir, "components/moon.pkg", components_moon_pkg())
   write(dir, "components/badge.mbt", badge_template)
   write(dir, "components/callout.mbt", callout_template)
@@ -53,64 +52,75 @@ fn scaffold(dir : String) -> Unit raise {
 
   println("Created MoonBlox site at \{dir}/")
   println("  cd \{dir} && moonblox build")
-  println("  moon build --target js --release")
 }
 
 fn moon_mod_content() -> String {
-  let sb = StringBuilder::new()
-  sb.write_string("{\n")
-  sb.write_string("  \"name\": \"user/moonblox-site\",\n")
-  sb.write_string("  \"version\": \"0.1.0\",\n")
-  sb.write_string("  \"preferred-target\": \"js\",\n")
-  sb.write_string("  \"deps\": {\n")
-  sb.write_string("    \"xz-xuezhe/moonblox\": {\n")
-  sb.write_string("      \"path\": \"/Users/xuezhe/Fun/MoonMark\"\n")
-  sb.write_string("    },\n")
-  sb.write_string("    \"moonbit-community/rabbita\": \"0.12.4\",\n")
-  sb.write_string("    \"mizchi/markdown\": \"0.6.2\"\n")
-  sb.write_string("  }\n")
-  sb.write_string("}\n")
-  sb.to_string()
+  let s =
+    #|{
+    #|  "name": "user/moonblox-site",
+    #|  "version": "0.1.0",
+    #|  "preferred-target": "js",
+    #|  "deps": {
+    #|    "xz-xuezhe/moonblox": {
+    #|      "path": "/Users/xuezhe/Fun/MoonMark"
+    #|    },
+    #|    "moonbit-community/rabbita": "0.12.4",
+    #|    "mizchi/markdown": "0.6.2"
+    #|  }
+    #|}
+  s
 }
 
 fn moon_pkg_content() -> String {
-  let sb = StringBuilder::new()
-  sb.write_string("import {\n")
-  sb.write_string("  \"xz-xuezhe/moonblox/ast\",\n")
-  sb.write_string("  \"xz-xuezhe/moonblox/convert\",\n")
-  sb.write_string("  \"xz-xuezhe/moonblox/render\",\n")
-  sb.write_string("  \"moonbit-community/rabbita\",\n")
-  sb.write_string("  \"user/moonblox-site/components\",\n")
-  sb.write_string("}\n\n")
-  sb.write_string("supported_targets = \"js\"\n")
-  sb.write_string("options(\n  \"is-main\": true,\n)\n")
-  sb.to_string()
+  let s =
+    #|import {
+    #|  "xz-xuezhe/moonblox/ast",
+    #|  "xz-xuezhe/moonblox/convert",
+    #|  "xz-xuezhe/moonblox/render",
+    #|  "moonbit-community/rabbita",
+    #|  "user/moonblox-site/components",
+    #|}
+
+    #|supported_targets = "js"
+    #|options(
+    #|  "is-main": true,
+    #|)
+  s
 }
 
 fn components_moon_pkg() -> String {
-  let sb = StringBuilder::new()
-  sb.write_string("import {\n")
-  sb.write_string("  \"xz-xuezhe/moonblox/ast\",\n")
-  sb.write_string("  \"moonbit-community/rabbita\",\n")
-  sb.write_string("  \"moonbit-community/rabbita/html\",\n")
-  sb.write_string("  \"moonbit-community/rabbita/cmd\",\n")
-  sb.write_string("}\n\n")
-  sb.write_string("supported_targets = \"js+native\"\n")
-  sb.to_string()
+  let s =
+    #|import {
+    #|  "xz-xuezhe/moonblox/ast",
+    #|  "moonbit-community/rabbita",
+    #|  "moonbit-community/rabbita/html",
+    #|  "moonbit-community/rabbita/cmd",
+    #|}
+
+    #|supported_targets = "js+native"
+  s
 }
 
 fn config_content() -> String {
-  "{\n  \"input\": \"posts\",\n  \"output\": \"dist\",\n  \"components\": \"./components\"\n}\n"
+  let s =
+    #|{
+    #|  "input": "posts",
+    #|  "output": "dist",
+    #|  "components": "./components"
+    #|}
+  s
 }
 
 fn sample_content() -> String {
-  let sb = StringBuilder::new()
-  sb.write_string("# Hello MoonBlox\n\n")
-  sb.write_string("Welcome to your MoonBlox site! ")
-  sb.write_string("This is a @badge(text: \"new\", tone: \"info\") feature.\n\n")
-  sb.write_string("Try the counter: @counter(initial: 0)\n\n")
-  sb.write_string(":::callout(type: \"note\", title: \"Tip\")\n")
-  sb.write_string("Add more `.md` files to `posts/` and components to `components/`.\n")
-  sb.write_string(":::\n")
-  sb.to_string()
+  let s =
+    #|# Hello MoonBlox
+    #|
+    #|Welcome to your MoonBlox site! This is a @badge(text: "new", tone: "info") feature.
+    #|
+    #|Try the counter: @counter(initial: 0)
+    #|
+    #|:::callout(type: "note", title: "Tip")
+    #|Add more `.md` files to `posts/` and components to `components/`.
+    #|:::
+  s
 }
