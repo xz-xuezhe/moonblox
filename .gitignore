@@ -1,0 +1,27 @@
+# Build output
+dist/
+target/
+_build/
+
+# MoonBit
+.moon/
+.mooncakes/
+*.mbti
+
+# AI coding
+.claude/
+CLAUDE.md
+openspec/
+skills-lock.json
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.local

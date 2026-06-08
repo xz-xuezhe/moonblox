@@ -1,0 +1,14 @@
+{
+  "name": "xz-xuezhe/moonmark-cli",
+  "version": "0.1.0",
+  "deps": {
+    "xz-xuezhe/moonmark": {
+      "path": "../.."
+    },
+    "moonbitlang/x": "0.4.45"
+  },
+  "readme": "",
+  "keywords": [],
+  "description": "MoonMark CLI",
+  "source": "."
+}

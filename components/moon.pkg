@@ -1,0 +1,5 @@
+// Built-in static components
+
+import {
+  "xz-xuezhe/moonmark/ast",
+}
