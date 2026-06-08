@@ -1,4 +1,4 @@
-// MoonMark AST → HTML renderer
+// MoonBlox AST → HTML renderer
 
 ///|
 fn escape(s : String) -> String {
@@ -183,7 +183,7 @@ fn render_list_items(
 }
 
 ///|
-/// Render a MoonMark Document to a complete HTML page.
+/// Render a MoonBlox Document to a complete HTML page.
 /// Reads theme/style.css and theme/page.html from the given directory.
 /// Component maps map component names to user-provided render functions.
 pub fn render_document(

@@ -1,4 +1,4 @@
-// Serialize MoonMark Value to JSON string
+// Serialize MoonBlox Value to JSON string
 
 ///|
 /// Convert a Value tree to a JSON string

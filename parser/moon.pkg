@@ -1,7 +1,7 @@
-// Directive argument parser for MoonMark
+// Directive argument parser for MoonBlox
 
 import {
-  "xz-xuezhe/moonmark/ast",
+  "xz-xuezhe/moonblox/ast",
   "moonbitlang/core/list",
 }
 

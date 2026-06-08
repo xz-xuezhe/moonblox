@@ -1,6 +1,6 @@
-# MoonMark Demo
+# MoonBlox Demo
 
-This is a **MoonMark** demo showing inline components.
+This is a **MoonBlox** demo showing inline components.
 
 Here is a badge: @badge(text: "experimental", tone: "warning")
 
@@ -17,9 +17,9 @@ This `@badge` inside inline code should NOT be expanded:
 The one inside a fenced code block should also stay as-is.
 
 :::callout(type: "note", title: "Did you know?")
-MoonMark supports container blocks written in **Markdown**. You can use *emphasis*, `code`, and more inside callouts.
+MoonBlox supports container blocks written in **Markdown**. You can use *emphasis*, `code`, and more inside callouts.
 :::
 
 ## Final Thoughts
 
-This document was generated from Markdown with MoonMark directives.
+This document was generated from Markdown with MoonBlox directives.

@@ -1,8 +1,8 @@
-// MoonMark root package — public API entry point
+// MoonBlox root package — public API entry point
 
 import {
-  "xz-xuezhe/moonmark/ast",
-  "xz-xuezhe/moonmark/convert",
-  "xz-xuezhe/moonmark/render",
+  "xz-xuezhe/moonblox/ast",
+  "xz-xuezhe/moonblox/convert",
+  "xz-xuezhe/moonblox/render",
   "moonbitlang/x/fs",
 }

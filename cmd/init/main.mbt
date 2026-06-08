@@ -1,19 +1,19 @@
-/// MoonMark scaffold CLI — `moonmark init <dir>`
+/// MoonBlox scaffold CLI — `moonblox init <dir>`
 
 fn main raise {
   let args = @env.args()
   guard args.length() >= 2 else {
-    println("Usage: moonmark init <directory>")
+    println("Usage: moonblox init <directory>")
     return
   }
   let cmd = args[1]
   guard cmd == "init" else {
     println("Unknown command: \{cmd}")
-    println("Usage: moonmark init <directory>")
+    println("Usage: moonblox init <directory>")
     return
   }
   guard args.length() >= 3 else {
-    println("Usage: moonmark init <directory>")
+    println("Usage: moonblox init <directory>")
     return
   }
   let dir = args[2]
@@ -46,15 +46,15 @@ fn scaffold(dir : String) -> Unit raise {
 
   write_sample(dir)
 
-  println("Created MoonMark site at \{dir}/")
+  println("Created MoonBlox site at \{dir}/")
   println("  cd \{dir} && moon run main")
 }
 
 fn write_moon_mod(dir : String) -> Unit raise {
   let sb = StringBuilder::new()
-  sb.write_string("name = \"user/moonmark-site\"\n")
+  sb.write_string("name = \"user/moonblox-site\"\n")
   sb.write_string("version = \"0.1.0\"\n\n")
-  sb.write_string("import {\n  \"xz-xuezhe/moonmark\",\n}\n\n")
+  sb.write_string("import {\n  \"xz-xuezhe/moonblox\",\n}\n\n")
   sb.write_string("options(\n")
   sb.write_string("  \"pre-build\": [\n")
   sb.write_string("    {\n")
@@ -70,7 +70,7 @@ fn write_moon_mod(dir : String) -> Unit raise {
 fn write_main(dir : String) -> Unit raise {
   let sb = StringBuilder::new()
   sb.write_string("fn main raise {\n")
-  sb.write_string("  @moonmark.build(config_path=\"moonmark.json\")\n")
+  sb.write_string("  @moonblox.build(config_path=\"moonblox.json\")\n")
   sb.write_string("}\n")
   @fs.write_string_to_file("\{dir}/main.mbt", sb.to_string())
 }
@@ -83,7 +83,7 @@ fn write_config(dir : String) -> Unit raise {
   sb.write_string("  \"theme\": \"theme\",\n")
   sb.write_string("  \"components\": \"components\"\n")
   sb.write_string("}\n")
-  @fs.write_string_to_file("\{dir}/moonmark.json", sb.to_string())
+  @fs.write_string_to_file("\{dir}/moonblox.json", sb.to_string())
 }
 
 fn write_interactive(dir : String) -> Unit raise {
@@ -119,8 +119,8 @@ fn copy_template(dir : String, templates : String, name : String) -> Unit raise 
 
 fn write_sample(dir : String) -> Unit raise {
   let sb = StringBuilder::new()
-  sb.write_string("# Hello MoonMark\n\n")
-  sb.write_string("Welcome to your MoonMark site! ")
+  sb.write_string("# Hello MoonBlox\n\n")
+  sb.write_string("Welcome to your MoonBlox site! ")
   sb.write_string("This is a @badge(text: \"new\", tone: \"info\") feature.\n\n")
   sb.write_string("Try the interactive demo: @slider(param: \"reward\", value: 0.5)\n\n")
   sb.write_string(":::callout(type: \"note\", title: \"Tip\")\n")

@@ -1,4 +1,4 @@
-// mdast Block → MoonMark Block conversion + container block detection
+// mdast Block → MoonBlox Block conversion + container block detection
 
 // Extract inline text from a block's span in the source, strip trailing \n
 
@@ -241,7 +241,7 @@ fn merge_containers(blocks : Array[@ast.Block]) -> Array[@ast.Block] {
 // --- Public API ---
 
 ///|
-/// Parse a Markdown string and convert to MoonMark AST
+/// Parse a Markdown string and convert to MoonBlox AST
 pub fn parse_markdown(input : String) -> @ast.Document {
   let result = @markdown.parse(input)
   let children = convert_blocks(result.document.children, input)

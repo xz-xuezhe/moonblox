@@ -1,8 +1,8 @@
-// MoonMark HTML renderer
+// MoonBlox HTML renderer
 
 import {
-  "xz-xuezhe/moonmark/ast",
-  "xz-xuezhe/moonmark/convert",
+  "xz-xuezhe/moonblox/ast",
+  "xz-xuezhe/moonblox/convert",
   "mizchi/markdown",
   "moonbitlang/x/fs",
 }

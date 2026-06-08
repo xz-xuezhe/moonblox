@@ -1,4 +1,4 @@
-name = "xz-xuezhe/moonmark"
+name = "xz-xuezhe/moonblox"
 
 version = "0.1.0"
 
@@ -15,7 +15,7 @@ license = "Apache-2.0"
 
 keywords = [ "markdown", "ssg", "static-site-generator" ]
 
-description = "Markdown-first programmable site generator with MoonBit components"
+description = "MoonBit-native programmable site generator with interactive components"
 
 preferred_target = "native"
 

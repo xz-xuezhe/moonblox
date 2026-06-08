@@ -1,11 +1,11 @@
-// MoonMark public API — called from user projects
+// MoonBlox public API — called from user projects
 
 ///|
 /// Build a static site from markdown files.
-/// `config_path` points to a JSON config file (default: `moonmark.json`).
+/// `config_path` points to a JSON config file (default: `moonblox.json`).
 /// Component maps allow users to register their own render functions.
 pub fn build(
-  config_path? : String = "moonmark.json",
+  config_path? : String = "moonblox.json",
   inline_components? : Map[String, (Map[String, @ast.Value]) -> String] = Map([]),
   container_components? : Map[
     String,

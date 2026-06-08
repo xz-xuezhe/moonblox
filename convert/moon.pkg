@@ -1,8 +1,8 @@
-// mdast → MoonMark AST converter
+// mdast → MoonBlox AST converter
 
 import {
-  "xz-xuezhe/moonmark/ast",
-  "xz-xuezhe/moonmark/parser",
+  "xz-xuezhe/moonblox/ast",
+  "xz-xuezhe/moonblox/parser",
   "mizchi/markdown",
   "moonbitlang/x/fs",
 }

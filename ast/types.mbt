@@ -1,4 +1,4 @@
-// MoonMark AST type definitions
+// MoonBlox AST type definitions
 
 // Component argument values
 
