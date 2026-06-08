@@ -9,9 +9,9 @@ options(
   "is-main": true,
   "pre-build": [
     {
-      "command": ":embed -i $input -o $output --name css_template",
-      "input": "../../lib/templates/theme/style.css",
-      "output": "css_template.mbt",
+      "command": ":embed -i $input -o $output --name base_css",
+      "input": "../../lib/templates/theme/base.css",
+      "output": "base_css.mbt",
     },
     {
       "command": ":embed -i $input -o $output --name index_html",
@@ -19,19 +19,34 @@ options(
       "output": "index_html.mbt",
     },
     {
-      "command": ":embed -i $input -o $output --name badge_template",
-      "input": "../../lib/templates/components/badge.mbt",
-      "output": "badge_template.mbt",
+      "command": ":embed -i $input -o $output --name badge_mbt",
+      "input": "../../lib/templates/components/badge/badge.mbt",
+      "output": "badge_mbt.mbt",
     },
     {
-      "command": ":embed -i $input -o $output --name callout_template",
-      "input": "../../lib/templates/components/callout.mbt",
-      "output": "callout_template.mbt",
+      "command": ":embed -i $input -o $output --name badge_css",
+      "input": "../../lib/templates/components/badge/badge.css",
+      "output": "badge_css.mbt",
     },
     {
-      "command": ":embed -i $input -o $output --name counter_template",
-      "input": "../../lib/templates/components/counter.mbt",
-      "output": "counter_template.mbt",
+      "command": ":embed -i $input -o $output --name counter_mbt",
+      "input": "../../lib/templates/components/counter/counter.mbt",
+      "output": "counter_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name counter_css",
+      "input": "../../lib/templates/components/counter/counter.css",
+      "output": "counter_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name callout_mbt",
+      "input": "../../lib/templates/components/callout/callout.mbt",
+      "output": "callout_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name callout_css",
+      "input": "../../lib/templates/components/callout/callout.css",
+      "output": "callout_css.mbt",
     },
   ],
 )

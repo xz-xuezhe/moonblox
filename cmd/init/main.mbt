@@ -37,21 +37,30 @@ fn scaffold(dir : String) -> Unit raise {
   mkdir(dir)
   mkdir("\{dir}/components")
   mkdir("\{dir}/posts")
+  mkdir("\{dir}/theme")
 
   write(dir, "moon.mod.json", moon_mod_content())
   write(dir, "moon.pkg", moon_pkg_content())
   write(dir, "index.html", index_html)
-  write(dir, "style.css", css_template)
   write(dir, "moonblox.json", config_content())
   write(dir, "posts/index.md", sample_content())
+  write(dir, "theme/base.css", base_css)
 
-  write(dir, "components/moon.pkg", components_moon_pkg())
-  write(dir, "components/badge.mbt", badge_template)
-  write(dir, "components/callout.mbt", callout_template)
-  write(dir, "components/counter.mbt", counter_template)
+  // Components as directories
+  scaffold_component(dir, "badge", badge_mbt, badge_css)
+  scaffold_component(dir, "counter", counter_mbt, counter_css)
+  scaffold_component(dir, "callout", callout_mbt, callout_css)
 
   println("Created MoonBlox site at \{dir}/")
   println("  cd \{dir} && moonblox build")
+}
+
+fn scaffold_component(dir : String, name : String, mbt : String, css : String) -> Unit raise {
+  let comp_dir = "\{dir}/components/\{name}"
+  mkdir(comp_dir)
+  write(comp_dir, "moon.pkg", component_moon_pkg())
+  write(comp_dir, "\{name}.mbt", mbt)
+  write(comp_dir, "\{name}.css", css)
 }
 
 fn moon_mod_content() -> String {
@@ -78,7 +87,9 @@ fn moon_pkg_content() -> String {
     #|  "xz-xuezhe/moonblox/convert",
     #|  "xz-xuezhe/moonblox/render",
     #|  "moonbit-community/rabbita",
-    #|  "user/moonblox-site/components",
+    #|  "user/moonblox-site/components/badge",
+    #|  "user/moonblox-site/components/counter",
+    #|  "user/moonblox-site/components/callout",
     #|}
 
     #|supported_targets = "js"
@@ -88,7 +99,7 @@ fn moon_pkg_content() -> String {
   s
 }
 
-fn components_moon_pkg() -> String {
+fn component_moon_pkg() -> String {
   let s =
     #|import {
     #|  "xz-xuezhe/moonblox/ast",
@@ -96,7 +107,7 @@ fn components_moon_pkg() -> String {
     #|  "moonbit-community/rabbita/html",
     #|  "moonbit-community/rabbita/cmd",
     #|}
-
+    #|
     #|supported_targets = "js+native"
   s
 }
