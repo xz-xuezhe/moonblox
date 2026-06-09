@@ -16,7 +16,7 @@ repository = ""
 
 license = "Apache-2.0"
 
-keywords = [ "markdown", "ssg", "static-site-generator" ]
+keywords = [ "markdown", "ssg", "composable", "rabbita" ]
 
 description = "MoonBit-native programmable site generator with interactive components"
 
