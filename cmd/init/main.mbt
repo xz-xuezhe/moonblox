@@ -39,14 +39,10 @@ fn scaffold(dir : String) -> Unit raise {
   mkdir("\{dir}/posts")
   mkdir("\{dir}/theme")
 
-  write(dir, "moon.mod.json", moon_mod_content())
-  write(dir, "moon.pkg", moon_pkg_content())
-  write(dir, "index.html", index_html)
-  write(dir, "moonblox.json", config_content())
+  write(dir, "moonblox.json", "{\n  \"input\": \"posts\",\n  \"output\": \"dist\",\n  \"components\": \"./components\"\n}\n")
   write(dir, "posts/index.md", sample_content())
   write(dir, "theme/base.css", base_css)
 
-  // Components as directories
   scaffold_component(dir, "badge", badge_mbt, badge_css)
   scaffold_component(dir, "counter", counter_mbt, counter_css)
   scaffold_component(dir, "callout", callout_mbt, callout_css)
@@ -63,42 +59,6 @@ fn scaffold_component(dir : String, name : String, mbt : String, css : String) -
   write(comp_dir, "\{name}.css", css)
 }
 
-fn moon_mod_content() -> String {
-  let s =
-    #|{
-    #|  "name": "user/moonblox-site",
-    #|  "version": "0.1.0",
-    #|  "preferred-target": "js",
-    #|  "deps": {
-    #|    "xz-xuezhe/moonblox": {
-    #|      "path": "/Users/xuezhe/Fun/MoonMark"
-    #|    },
-    #|    "moonbit-community/rabbita": "0.12.4",
-    #|    "mizchi/markdown": "0.6.2"
-    #|  }
-    #|}
-  s
-}
-
-fn moon_pkg_content() -> String {
-  let s =
-    #|import {
-    #|  "xz-xuezhe/moonblox/ast",
-    #|  "xz-xuezhe/moonblox/convert",
-    #|  "xz-xuezhe/moonblox/render",
-    #|  "moonbit-community/rabbita",
-    #|  "user/moonblox-site/components/badge",
-    #|  "user/moonblox-site/components/counter",
-    #|  "user/moonblox-site/components/callout",
-    #|}
-
-    #|supported_targets = "js"
-    #|options(
-    #|  "is-main": true,
-    #|)
-  s
-}
-
 fn component_moon_pkg() -> String {
   let s =
     #|import {
@@ -109,16 +69,6 @@ fn component_moon_pkg() -> String {
     #|}
     #|
     #|supported_targets = "js+native"
-  s
-}
-
-fn config_content() -> String {
-  let s =
-    #|{
-    #|  "input": "posts",
-    #|  "output": "dist",
-    #|  "components": "./components"
-    #|}
   s
 }
 
