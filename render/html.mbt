@@ -3,58 +3,85 @@
 // --- Inline rendering ---
 
 ///|
-/// Batch consecutive Markdown inlines → serialize to markdown →
-/// render via md_to_html → inject as inner_html span.
-/// Component inlines break the batch and render individually.
+/// Convert Markdown inlines directly to rabbita Html nodes.
+/// Component inlines are dispatched via inline_cells.
 fn render_inlines(
   inlines : Array[@ast.Inline],
   inline_cells : Map[String, (Map[String, @ast.Value]) -> @rabbita.Cell],
 ) -> Array[@rabbita.Html] {
   let result : Array[@rabbita.Html] = []
-  let mut batch : Array[@markdown.Inline] = []
   for i = 0; i < inlines.length(); i = i + 1 {
     match inlines[i] {
-      @ast.Inline::Markdown(md) => batch.push(md)
-      @ast.Inline::Component(name, args) => {
-        flush_md_batch(result, batch)
-        batch = []
+      @ast.Inline::Markdown(md) => result.push(md_inline_to_html(md))
+      @ast.Inline::Component(name, args) =>
         match inline_cells.get(name) {
           Some(cell_fn) => result.push(cell_fn(args).view())
-          None => {
-            let msg = "<!-- unknown inline: \{name} -->"
-            let attrs = @html.Attrs::build().inner_html(msg)
-            let empty : Array[@rabbita.Html] = []
-            result.push(@html.span(attrs~, empty))
-          }
+          None =>
+            result.push(@html.span([@html.text("<!-- unknown: \{name} -->")]))
         }
-      }
     }
   }
-  flush_md_batch(result, batch)
   result
 }
 
 ///|
-fn flush_md_batch(
-  result : Array[@rabbita.Html],
-  batch : Array[@markdown.Inline],
-) -> Unit {
-  if batch.length() == 0 {
-    return
+/// Map each @markdown.Inline variant to its @rabbita.Html equivalent.
+fn md_inline_to_html(inline : @markdown.Inline) -> @rabbita.Html {
+  match inline {
+    @markdown.Inline::Text(content~, ..) => @html.text(content)
+    @markdown.Inline::Code(content~, ..) => @html.code([@html.text(content)])
+    @markdown.Inline::Emphasis(children~, ..) =>
+      @html.em(md_inlines_to_html(children))
+    @markdown.Inline::Strong(children~, ..) =>
+      @html.strong(md_inlines_to_html(children))
+    @markdown.Inline::Strikethrough(children~, ..) =>
+      @html.del(md_inlines_to_html(children))
+    @markdown.Inline::Link(children~, url~, title~, ..) => {
+      let kids = md_inlines_to_html(children)
+      if title == "" {
+        @html.a(href=url, kids)
+      } else {
+        let empty : Array[@rabbita.Html] = []
+        @html.a(href=url, title~, kids)
+      }
+    }
+    @markdown.Inline::Image(alt~, url~, title~, ..) =>
+      if title == "" {
+        @html.img(src=url, alt~)
+      } else {
+        @html.img(src=url, alt~, title~)
+      }
+    @markdown.Inline::SoftBreak(..) => @html.text("\n")
+    @markdown.Inline::HardBreak(..) => @html.br()
+    @markdown.Inline::Autolink(url~, is_email~, ..) => {
+      let href = if is_email { "mailto:" + url } else { url }
+      @html.a(href~, [@html.text(url)])
+    }
+    @markdown.Inline::HtmlInline(html~, ..) => {
+      let empty : Array[@rabbita.Html] = []
+      @html.span(attrs=@html.Attrs::build().inner_html(html), empty)
+    }
+    @markdown.Inline::WikiLink(target~, label~, fragment~, ..) => {
+      let href = if fragment == "" { target } else { target + "#" + fragment }
+      let text = if label == "" { href } else { label }
+      @html.a(href~, [@html.text(text)])
+    }
+    @markdown.Inline::RefLink(children~, ..) =>
+      @html.span(md_inlines_to_html(children))
+    @markdown.Inline::RefImage(..) | @markdown.Inline::FootnoteReference(..) =>
+      @html.text("")
   }
-  let sb = StringBuilder::new()
-  for i = 0; i < batch.length(); i = i + 1 {
-    sb.write_string(@convert.inline_to_md(batch[i]))
+}
+
+///|
+fn md_inlines_to_html(
+  inlines : Array[@markdown.Inline],
+) -> Array[@rabbita.Html] {
+  let result : Array[@rabbita.Html] = []
+  for i = 0; i < inlines.length(); i = i + 1 {
+    result.push(md_inline_to_html(inlines[i]))
   }
-  let html = @markdown.md_to_html(sb.to_string()).trim()
-  let inner = if html.has_prefix("<p>") && html.has_suffix("</p>") {
-    html[3:html.length() - 4].to_owned()
-  } else {
-    html.to_owned()
-  }
-  let attrs = @html.Attrs::build().inner_html(inner)
-  let empty : Array[@rabbita.Html] = []
-  result.push(@html.span(attrs~, empty))
+  result
 }
 
 // --- Block rendering ---
@@ -65,7 +92,7 @@ fn render_block(
   inline_cells : Map[String, (Map[String, @ast.Value]) -> @rabbita.Cell],
   container_cells : Map[
     String,
-    (Map[String, @ast.Value], String) -> @rabbita.Cell,
+    (Map[String, @ast.Value], Array[@rabbita.Html]) -> @rabbita.Cell,
   ],
 ) -> @rabbita.Cell {
   match block {
@@ -123,26 +150,17 @@ fn render_container(
   inline_cells : Map[String, (Map[String, @ast.Value]) -> @rabbita.Cell],
   container_cells : Map[
     String,
-    (Map[String, @ast.Value], String) -> @rabbita.Cell,
+    (Map[String, @ast.Value], Array[@rabbita.Html]) -> @rabbita.Cell,
   ],
 ) -> @rabbita.Cell {
-  let sb = StringBuilder::new()
+  let kids : Array[@rabbita.Html] = []
   for i = 0; i < cc.children.length(); i = i + 1 {
-    if i > 0 {
-      sb.write_char('\n')
-    }
     let child_cell = render_block(cc.children[i], inline_cells, container_cells)
-    sb.write_string(@rabbita.render_to_string(child_cell))
+    kids.push(child_cell.view())
   }
-  let body = sb.to_string()
   match container_cells.get(cc.name) {
-    Some(cell_fn) => cell_fn(cc.args, body)
-    None => {
-      let empty : Array[@rabbita.Html] = []
-      @rabbita.static_cell(
-        @html.div(attrs=@html.Attrs::build().inner_html(body), empty),
-      )
-    }
+    Some(cell_fn) => cell_fn(cc.args, kids)
+    None => @rabbita.static_cell(@html.div(kids))
   }
 }
 
@@ -152,7 +170,7 @@ fn render_list(
   inline_cells : Map[String, (Map[String, @ast.Value]) -> @rabbita.Cell],
   container_cells : Map[
     String,
-    (Map[String, @ast.Value], String) -> @rabbita.Cell,
+    (Map[String, @ast.Value], Array[@rabbita.Html]) -> @rabbita.Cell,
   ],
 ) -> @rabbita.Html {
   let items : Array[@rabbita.Html] = []
@@ -179,7 +197,7 @@ pub fn render_document(
   ),
   container_cells? : Map[
     String,
-    (Map[String, @ast.Value], String) -> @rabbita.Cell,
+    (Map[String, @ast.Value], Array[@rabbita.Html]) -> @rabbita.Cell,
   ] = Map([]),
 ) -> @rabbita.Cell {
   let children : Array[@rabbita.Html] = []

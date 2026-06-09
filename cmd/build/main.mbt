@@ -213,7 +213,8 @@ fn scan_components(dir : String, out_dir : String) -> Unit raise {
         let content = @fs.read_file_to_string(mbt_path)
         let has_cell = content.contains("_cell(args") || content.contains("_cell(args:") || content.contains("_cell(props")
         if has_cell {
-          if content.contains(", body:") || content.contains(", body :") {
+          if content.contains(", children") && (content.contains(", children:") || content.contains(", children :")) ||
+             content.contains(", body:") || content.contains(", body :") {
             container_s.push(comp_name)
           } else {
             inline_s.push(comp_name)
@@ -240,13 +241,13 @@ fn scan_components(dir : String, out_dir : String) -> Unit raise {
   }
   sb.write_string("  m\n}\n\n")
   sb.write_string(
-    #|fn container_cells() -> Map[String, (Map[String, @ast.Value], String) -> @rabbita.Cell] {
-    #|  let m : Map[String, (Map[String, @ast.Value], String) -> @rabbita.Cell] = Map([])
+    #|fn container_cells() -> Map[String, (Map[String, @ast.Value], Array[@rabbita.Html]) -> @rabbita.Cell] {
+    #|  let m : Map[String, (Map[String, @ast.Value], Array[@rabbita.Html]) -> @rabbita.Cell] = Map([])
     #|
   )
   for i = 0; i < container_s.length(); i = i + 1 {
     let c = container_s[i]
-    sb.write_string("  m.set(\"\{c}\", fn(args, body) { @\{c}.\{c}_cell(@\{c}.\{c}_props(args), body) })\n")
+    sb.write_string("  m.set(\"\{c}\", fn(args, children) { @\{c}.\{c}_cell(@\{c}.\{c}_props(args), children) })\n")
   }
   sb.write_string("  m\n}\n")
   @fs.write_string_to_file("\{out_dir}/_registry.mbt", sb.to_string())

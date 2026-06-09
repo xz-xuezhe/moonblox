@@ -13,7 +13,10 @@ pub fn CalloutProps::new(
 }
 
 ///|
-pub fn callout_cell(props : CalloutProps, body : String) -> @rabbita.Cell {
+pub fn callout_cell(
+  props : CalloutProps,
+  children : Array[@rabbita.Html],
+) -> @rabbita.Cell {
   @rabbita.static_cell(
     {
       let empty : Array[@rabbita.Html] = []
@@ -22,12 +25,7 @@ pub fn callout_cell(props : CalloutProps, body : String) -> @rabbita.Cell {
       } else {
         [@html.div(class="callout__title", [@html.text(props.title)])]
       }
-      let attrs = @html.Attrs::build().inner_html(body)
-      let body_node = @html.div(attrs~, empty)
-      @html.div(
-        class="callout callout--\{props.type_}",
-        title_kids + [body_node],
-      )
+      @html.div(class="callout callout--\{props.type_}", title_kids + children)
     },
   )
 }
