@@ -72,9 +72,8 @@ async fn main {
 
   // Assemble dist/
   let dist_dir = "\{dir}/dist"
-  try {
-    if !@fs.path_exists(dist_dir) { try! @fs.create_dir(dist_dir) }
-  } catch { _ => () }
+  if @fs.path_exists(dist_dir) { remove_dir_all(dist_dir) }
+  try! @fs.create_dir(dist_dir)
 
   // Copy JS artifact
   let js_dir = "\{build_dir}/_build/js/release/build"
