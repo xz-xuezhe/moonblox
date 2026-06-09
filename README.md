@@ -28,10 +28,10 @@ git clone https://github.com/xz-xuezhe/moonblox
 cd moonblox
 
 # Scaffold a new site
-moon -C cmd/init run . --target native -- init my-site
+moon run --target native cmd/moonblox -- init my-site
 
 # Build and open
-moon -C cmd/build run . --target native -- build my-site
+MOONBLOX_PATH=. moon run --target native cmd/moonblox -- build my-site
 open my-site/dist/index.html
 ```
 

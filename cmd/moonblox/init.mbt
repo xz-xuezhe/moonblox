@@ -1,23 +1,7 @@
-/// MoonBlox scaffold CLI — `moonblox init <dir>`
+/// MoonBlox scaffold — `moonblox init <dir>`
 
-fn main {
-  let args = @env.args()
-  guard args.length() >= 2 else {
-    println("Usage: moonblox init <directory>")
-    return
-  }
-  let cmd = args[1]
-  guard cmd == "init" else {
-    println("Unknown command: \{cmd}")
-    println("Usage: moonblox init <directory>")
-    return
-  }
-  guard args.length() >= 3 else {
-    println("Usage: moonblox init <directory>")
-    return
-  }
-  let dir = args[2]
-  try scaffold(dir) catch {
+pub fn scaffold(dir : String) -> Unit {
+  try do_scaffold(dir) catch {
     err => println("Error: \{err}")
   }
 }
@@ -33,7 +17,7 @@ fn write(dir : String, name : String, content : String) -> Unit raise {
   try! @fs.write_string_to_file(path, content)
 }
 
-fn scaffold(dir : String) -> Unit raise {
+fn do_scaffold(dir : String) -> Unit raise {
   mkdir(dir)
   mkdir("\{dir}/components")
   mkdir("\{dir}/posts")

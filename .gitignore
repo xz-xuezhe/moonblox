@@ -11,10 +11,8 @@ _build/
 # Generated
 parser/parser.mbt
 parser/parser.mbt.map.json
-cmd/init/*_css.mbt
-cmd/init/*_mbt.mbt
-cmd/init/*_html.mbt
-cmd/init/*_template.mbt
+cmd/moonblox/*_css.mbt
+cmd/moonblox/*_mbt.mbt
 
 # AI coding
 .claude/

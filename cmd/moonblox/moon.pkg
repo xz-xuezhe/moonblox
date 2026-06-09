@@ -1,6 +1,9 @@
 import {
   "moonbitlang/core/env",
   "moonbitlang/x/fs",
+  "moonbitlang/async",
+  "moonbitlang/async/process",
+  "Yoorkin/ArgParser",
 }
 
 supported_targets = "native"
