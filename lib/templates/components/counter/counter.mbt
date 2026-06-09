@@ -4,6 +4,11 @@ pub(all) struct CounterProps {
 }
 
 ///|
+pub fn CounterProps::new(initial? : Double = 0.0) -> CounterProps {
+  CounterProps::{ initial, }
+}
+
+///|
 enum CounterMsg {
   Increment
   Decrement
@@ -35,13 +40,9 @@ fn counter_view(
 }
 
 ///|
-pub fn counter_cell(args : Map[String, @ast.Value]) -> @rabbita.Cell {
-  let initial = match args.get("initial") {
-    Some(@ast.Value::Number(n)) => n
-    _ => 0.0
-  }
+pub fn counter_cell(props : CounterProps) -> @rabbita.Cell {
   @rabbita.simple_cell(
-    model=CounterModel::{ count: initial },
+    model=CounterModel::{ count: props.initial },
     update=counter_update,
     view=counter_view,
   )

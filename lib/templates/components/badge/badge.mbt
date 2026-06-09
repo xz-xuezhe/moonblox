@@ -5,16 +5,16 @@ pub(all) struct BadgeProps {
 }
 
 ///|
-pub fn badge_cell(args : Map[String, @ast.Value]) -> @rabbita.Cell {
-  let text = match args.get("text") {
-    Some(@ast.Value::Str(s)) => s
-    _ => ""
-  }
-  let tone = match args.get("tone") {
-    Some(@ast.Value::Str(s)) => s
-    _ => "default"
-  }
+pub fn BadgeProps::new(
+  text? : String = "",
+  tone? : String = "default",
+) -> BadgeProps {
+  BadgeProps::{ text, tone }
+}
+
+///|
+pub fn badge_cell(props : BadgeProps) -> @rabbita.Cell {
   @rabbita.static_cell(
-    @html.span(class="badge badge--\{tone}", [@html.text(text)]),
+    @html.span(class="badge badge--\{props.tone}", [@html.text(props.text)]),
   )
 }
