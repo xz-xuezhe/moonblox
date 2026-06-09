@@ -246,5 +246,16 @@ pub fn parse_markdown(input : String) -> @ast.Document {
   let result = @markdown.parse(input)
   let children = convert_blocks(result.document.children, input)
   let merged = merge_containers(children)
-  @ast.Document::{ children: merged }
+  let meta : Map[String, String] = match result.document.frontmatter {
+    Some(fm) => {
+      let m : Map[String, String] = Map([])
+      for i = 0; i < fm.entries.length(); i = i + 1 {
+        let (k, v) = fm.entries[i]
+        m.set(k, v)
+      }
+      m
+    }
+    None => Map([])
+  }
+  @ast.Document::{ children: merged, meta }
 }

@@ -71,4 +71,5 @@ pub(all) struct ListItem {
 ///|
 pub(all) struct Document {
   children : Array[Block]
+  meta : Map[String, String]
 }
