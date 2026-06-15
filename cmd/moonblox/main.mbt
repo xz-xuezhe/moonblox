@@ -1,5 +1,5 @@
+///|
 /// MoonBlox CLI — `moonblox <command> [args]`
-
 async fn main {
   let args = @env.args()
   let cmd : Ref[String] = Ref("")
@@ -19,8 +19,9 @@ async fn main {
     [],
     fn(arg) {
       // Skip program name (args[0])
-      if arg == args[0] { () } else
-      if cmd.val == "" {
+      if arg == args[0] {
+        ()
+      } else if cmd.val == "" {
         cmd.val = arg
       } else if cmd_arg.val == "" {
         cmd_arg.val = arg
