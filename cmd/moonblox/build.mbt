@@ -121,7 +121,13 @@ pub async fn build(dir : String) -> Unit {
 
   // Sort posts by date descending for list page
   posts.sort_by(fn(a, b) {
-    if a.date > b.date { -1 } else if a.date < b.date { 1 } else { 0 }
+    if a.date > b.date {
+      -1
+    } else if a.date < b.date {
+      1
+    } else {
+      0
+    }
   })
 
   // Generate list page (static HTML)
