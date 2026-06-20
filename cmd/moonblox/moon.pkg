@@ -1,5 +1,6 @@
 import {
   "moonbitlang/core/env",
+  "moonbitlang/core/string",
   "moonbitlang/x/fs",
   "moonbitlang/async",
   "moonbitlang/async/fs" @afs,
@@ -49,6 +50,41 @@ options(
       "command": ":embed -i $input -o $output --name callout_css",
       "input": "../../lib/templates/components/callout/callout.css",
       "output": "callout_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name page_shell",
+      "input": "../../lib/templates/page_shell.html",
+      "output": "page_shell.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name live_reload_script",
+      "input": "../../lib/templates/live_reload.js",
+      "output": "live_reload_script.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name sample_post_md",
+      "input": "../../lib/templates/sample_post.md",
+      "output": "sample_post_md.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name default_config_json",
+      "input": "../../lib/templates/moonblox.json",
+      "output": "default_config_json.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name badge_moon_pkg",
+      "input": "../../lib/templates/components/badge/moon.pkg",
+      "output": "badge_moon_pkg.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name counter_moon_pkg",
+      "input": "../../lib/templates/components/counter/moon.pkg",
+      "output": "counter_moon_pkg.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name callout_moon_pkg",
+      "input": "../../lib/templates/components/callout/moon.pkg",
+      "output": "callout_moon_pkg.mbt",
     },
   ],
 )

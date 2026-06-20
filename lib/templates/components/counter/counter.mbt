@@ -9,13 +9,13 @@ pub fn CounterProps::new(initial? : Double = 0.0) -> CounterProps {
 }
 
 ///|
-enum CounterMsg {
+priv enum CounterMsg {
   Increment
   Decrement
 }
 
 ///|
-struct CounterModel {
+priv struct CounterModel {
   count : Double
 }
 

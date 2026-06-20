@@ -2,7 +2,6 @@
 
 import {
   "xz-xuezhe/moonblox/ast",
-  "xz-xuezhe/moonblox/convert",
   "mizchi/markdown",
   "moonbit-community/rabbita",
   "moonbit-community/rabbita/html",

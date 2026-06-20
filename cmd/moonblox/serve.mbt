@@ -6,23 +6,30 @@ pub async fn serve(dir : String, port : Int) -> Unit {
     return
   }
 
-  let dist_dir = "\{dir}/dist"
-  let port : UInt = port.to_uint()
+  let dist_dir = "\{dir}/\{DIST_DIR}"
+  let port : UInt = port.reinterpret_as_uint()
 
   // Initial build
   println("Building...")
-  let _ = build(dir)
+  let ok = build(dir)
+  guard ok else {
+    println("Error: initial build failed — fix errors and restart")
+    return
+  }
 
   // Setup file watcher (warren pattern: watch source dir, filter build artifacts)
   let watcher = @afs.Watcher(dir, ignored_paths=fn(path) {
-    path.contains("_moonblox") ||
-    path.contains("dist") ||
-    path.contains(".mooncakes") ||
-    path.contains("_build")
+    path.contains(BUILD_DIR_NAME) ||
+    path.contains(DIST_DIR) ||
+    path.contains(MOONCAKES_DIR) ||
+    path.contains(BUILD_OUT_DIR)
   })
 
   // Start HTTP server
-  let server = @http.Server(@socket.Addr::parse("127.0.0.1:\{port}"), reuse_addr=true)
+  let server = @http.Server(
+    @socket.Addr::parse("127.0.0.1:\{port}"),
+    reuse_addr=true,
+  )
   println("  Server: http://localhost:\{port}")
 
   // Subscriber management (warren pattern)
@@ -33,9 +40,9 @@ pub async fn serve(dir : String, port : Int) -> Unit {
     // Spawn HTTP server in background (warren: no_wait=true)
     group.spawn_bg(no_wait=true, allow_failure=true, () => {
       let _ = server.run_forever(
-        (request, _, conn) => handle_request(
-          dist_dir, request, conn, subscribers, next_id,
-        ),
+        (request, _, conn) => {
+          handle_request(dist_dir, request, conn, subscribers, next_id)
+        },
         allow_failure=true,
         max_connections=64,
       )
@@ -46,8 +53,12 @@ pub async fn serve(dir : String, port : Int) -> Unit {
     while true {
       watcher.wait_any()
       println("Change detected, rebuilding...")
-      let _ = build(dir)
-      broadcast(subscribers, BroadcastMsg::Reload)
+      let ok = build(dir)
+      if ok {
+        broadcast(subscribers, BroadcastMsg::Reload)
+      } else {
+        broadcast(subscribers, BroadcastMsg::BuildFailed(""))
+      }
       println("Rebuilt.")
     }
   })
@@ -83,13 +94,15 @@ async fn handle_request(
 ) -> Unit {
   guard request.meth is Get else {
     conn
-    ..send_response(405, "Method Not Allowed", extra_headers={"Content-Type": "text/plain"})
+    ..send_response(405, "Method Not Allowed", extra_headers={
+      "Content-Type": "text/plain",
+    })
     ..write("Method Not Allowed")
     .end_response()
     return
   }
 
-  let path = if request.path == "/" { "/index.html" } else { request.path }
+  let path = if request.path == "/" { "/\{INDEX_HTML}" } else { request.path }
 
   // WebSocket upgrade — warren's exact handle_ws pattern
   if path == "/__moonblox/events" {
@@ -127,7 +140,7 @@ async fn handle_request(
   // Serve file from dist/ (warren pattern: VFS read)
   let mut file_path = "\{dist_dir}\{path}"
   if @fs.path_exists(file_path) && @fs.is_dir(file_path) {
-    file_path = "\{file_path}/index.html"
+    file_path = "\{file_path}/\{INDEX_HTML}"
   }
 
   let content_type = if file_path.has_suffix(".html") {
@@ -148,12 +161,14 @@ async fn handle_request(
       content
     }
     conn
-    ..send_response(200, "OK", extra_headers={"Content-Type": content_type})
+    ..send_response(200, "OK", extra_headers={ "Content-Type": content_type })
     ..write(body)
     .end_response()
   } else {
     conn
-    ..send_response(404, "Not Found", extra_headers={"Content-Type": "text/plain"})
+    ..send_response(404, "Not Found", extra_headers={
+      "Content-Type": "text/plain",
+    })
     ..write("\{path} Not Found")
     .end_response()
   }
@@ -161,15 +176,9 @@ async fn handle_request(
 
 ///|
 fn inject_reload_script(html : String) -> String {
-  let script =
-    #|<script>
-    #|(function() {
-    #|  var ws = new WebSocket('ws://' + location.host + '/__moonblox/events');
-    #|  ws.onmessage = function(e) { if (e.data === 'reload') location.reload(); };
-    #|  ws.onclose = function() { console.log('[moonblox] live reload disconnected'); };
-    #|})();
-    #|</script>
-    #|
-    #|</body>
-  html.replace_all(old="</body>", new=script)
+  match html.find("</body>") {
+    Some(idx) =>
+      html[0:idx].to_owned() + live_reload_script + html[idx:].to_owned()
+    None => html + live_reload_script // no </body> tag, append at end
+  }
 }

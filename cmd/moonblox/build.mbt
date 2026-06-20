@@ -1,13 +1,89 @@
+// Dependency versions — keep in sync with root moon.mod
+
+///|
+const RABBITA_VERSION : String = "0.12.4"
+
+///|
+const MARKDOWN_VERSION : String = "0.6.2"
+
+///|
+const ENGINE_VERSION : String = "0.1.0"
+
+///|
+const BUILD_DIR_NAME : String = "_moonblox"
+
+///|
+const COMPONENTS_DIR : String = "components"
+
+///|
+const THEME_DIR : String = "theme"
+
+///|
+const PAGES_DIR : String = "pages"
+
+///|
+const POSTS_DIR : String = "posts"
+
+///|
+const DIST_DIR : String = "dist"
+
+///|
+const BUILD_OUT_DIR : String = "_build"
+
+///|
+const BUILD_ARTIFACT_PATH : String = "_build/js/release/build"
+
+///|
+const PACKAGE_NAME : String = "moonblox-build"
+
+///|
+const REGISTRY_FILE : String = "_registry.mbt"
+
+///|
+const PROPS_SUFFIX : String = "_props.mbt"
+
+///|
+const INDEX_HTML : String = "index.html"
+
+///|
+const STYLE_CSS : String = "style.css"
+
+///|
+const MAIN_MBT : String = "main.mbt"
+
+///|
+const MOONCAKES_DIR : String = ".mooncakes"
+
+///|
+const ENGINE_PACKAGE : String = "xz-xuezhe/moonblox"
+
+///|
+const ENGINE_AST_PACKAGE : String = "xz-xuezhe/moonblox/ast"
+
+///|
+const ENGINE_CONVERT_PACKAGE : String = "xz-xuezhe/moonblox/convert"
+
+///|
+const ENGINE_RENDER_PACKAGE : String = "xz-xuezhe/moonblox/render"
+
+///|
+const RABBITA_PACKAGE : String = "moonbit-community/rabbita"
+
+///|
+const MARKDOWN_PACKAGE : String = "mizchi/markdown"
+
+///|
+const MOUNT_ID : String = "app"
+
 ///|
 /// moonblox build — generate temp project in _moonblox/, compile, assemble dist/
-pub async fn build(dir : String) -> Unit {
+pub async fn build(dir : String) -> Bool {
   guard @fs.path_exists(dir) else {
     println("Error: directory not found: \{dir}")
-    return
+    return false
   }
 
-  let build_dir = "\{dir}/_moonblox"
-  let engine_version = "0.1.0" // embedded at compile time
+  let build_dir = "\{dir}/\{BUILD_DIR_NAME}"
 
   // Clean and recreate _moonblox/
   try {
@@ -15,18 +91,18 @@ pub async fn build(dir : String) -> Unit {
       remove_dir_all(build_dir)
     }
     try! @fs.create_dir(build_dir)
-    try! @fs.create_dir("\{build_dir}/components")
-    try! @fs.create_dir("\{build_dir}/theme")
-    try! @fs.create_dir("\{build_dir}/pages")
+    try! @fs.create_dir("\{build_dir}/\{COMPONENTS_DIR}")
+    try! @fs.create_dir("\{build_dir}/\{THEME_DIR}")
+    try! @fs.create_dir("\{build_dir}/\{PAGES_DIR}")
   } catch {
     e => {
       println("Error: failed to create _moonblox/: \{e}")
-      return
+      return false
     }
   }
 
   // Generate moon.mod.json
-  generate_moon_mod(build_dir, engine_version)
+  generate_moon_mod(build_dir)
 
   // Copy user content
   copy_components(dir, build_dir)
@@ -36,24 +112,24 @@ pub async fn build(dir : String) -> Unit {
   generate_root_moon_pkg(build_dir)
 
   // Scan components, generate shared _registry.mbt at root
-  scan_components("\{build_dir}/components", build_dir)
+  scan_components("\{build_dir}/\{COMPONENTS_DIR}", build_dir)
 
   // Per-page generation: collect front matter for list page
   let posts : Array[PostMeta] = []
-  let posts_dir = "\{dir}/posts"
-  try {
-    if @fs.path_exists(posts_dir) {
-      let files = @fs.read_dir(posts_dir)
-      for i = 0; i < files.length(); i = i + 1 {
-        let name = files[i]
-        if name.has_suffix(".md") {
+  let posts_dir = "\{dir}/\{POSTS_DIR}"
+  if @fs.path_exists(posts_dir) {
+    let files = @fs.read_dir(posts_dir)
+    for i = 0; i < files.length(); i = i + 1 {
+      let name = files[i]
+      if name.has_suffix(".md") {
+        try {
           let content = @fs.read_file_to_string("\{posts_dir}/\{name}")
           let slug = slug_from_filename(name)
-          let page_dir = "\{build_dir}/pages/\{slug}"
+          let page_dir = "\{build_dir}/\{PAGES_DIR}/\{slug}"
           try! @fs.create_dir(page_dir)
           generate_page_moon_pkg(build_dir, slug)
           @fs.write_string_to_file(
-            "\{page_dir}/main.mbt",
+            "\{page_dir}/\{MAIN_MBT}",
             generate_main_mbt(content),
           )
           println("Generated: pages/\{slug}/")
@@ -64,11 +140,12 @@ pub async fn build(dir : String) -> Unit {
             date: get_meta(meta, "date", ""),
             tags: get_meta(meta, "tags", ""),
           })
+        } catch {
+          @fs.IOError(msg) => println("Warning: skipping '\{name}': \{msg}")
+          _ => println("Warning: skipping '\{name}': unexpected error")
         }
       }
     }
-  } catch {
-    _ => ()
   }
 
   // Collect CSS: base.css + component .css files
@@ -83,40 +160,34 @@ pub async fn build(dir : String) -> Unit {
   )
   guard result == 0 else {
     println("Error: moon build failed with exit code \{result}")
-    return
+    return false
   }
 
   // Assemble dist/
-  let dist_dir = "\{dir}/dist"
+  let dist_dir = "\{dir}/\{DIST_DIR}"
   if @fs.path_exists(dist_dir) {
     remove_dir_all(dist_dir)
   }
   try! @fs.create_dir(dist_dir)
 
   // Copy per-page JS and generate HTML shells
-  let js_dir = "\{build_dir}/_build/js/release/build"
+  let js_dir = "\{build_dir}/\{BUILD_ARTIFACT_PATH}"
   for i = 0; i < posts.length(); i = i + 1 {
     let slug = posts[i].slug
     let page_dist = "\{dist_dir}/\{slug}"
     try! @fs.create_dir(page_dist)
     // Copy JS
-    try {
-      let js_src = "\{js_dir}/pages/\{slug}/\{slug}.js"
-      if @fs.path_exists(js_src) {
-        @fs.write_string_to_file(
-          "\{page_dist}/\{slug}.js",
-          @fs.read_file_to_string(js_src),
-        )
-        println("Copied: \{slug}.js -> dist/\{slug}/")
-      }
-    } catch {
-      _ => ()
+    let js_src = "\{js_dir}/\{PAGES_DIR}/\{slug}/\{slug}.js"
+    if @fs.path_exists(js_src) {
+      @fs.write_string_to_file(
+        "\{page_dist}/\{slug}.js",
+        @fs.read_file_to_string(js_src),
+      )
+      println("Copied: \{slug}.js -> dist/\{slug}/")
     }
     // Write page HTML shell
-    let html = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>\{posts[i].title}</title>\n  <link rel=\"stylesheet\" href=\"../style.css\">\n</head>\n<body>\n  <div id=\"app\"></div>\n  <script src=\"\{slug}.js\" type=\"module\"></script>\n</body>\n</html>\n"
-    @fs.write_string_to_file("\{page_dist}/index.html", html) catch {
-      _ => ()
-    }
+    let html = fill_template(page_shell, posts[i].title, slug)
+    @fs.write_string_to_file("\{page_dist}/\{INDEX_HTML}", html)
   }
 
   // Sort posts by date descending for list page
@@ -134,12 +205,13 @@ pub async fn build(dir : String) -> Unit {
   generate_list_html(posts, dist_dir)
 
   if css != "" {
-    @fs.write_string_to_file("\{dist_dir}/style.css", css) catch {
-      _ => ()
+    @fs.write_string_to_file("\{dist_dir}/\{STYLE_CSS}", css) catch {
+      @fs.IOError(msg) => println("Warning: failed to write style.css: \{msg}")
     }
   }
 
   println("Built: \{dist_dir}/")
+  true
 }
 
 ///|
@@ -161,28 +233,40 @@ fn remove_dir_all(dir : String) -> Unit raise {
 
 ///|
 /// Generate moon.mod.json
-fn generate_moon_mod(build_dir : String, version : String) -> Unit raise {
+fn generate_moon_mod(build_dir : String) -> Unit raise {
   let engine_dep = match @env.get_env_var("MOONBLOX_PATH") {
     Some(path) => {
-      let resolved = if path.has_prefix("/") { path } else {
+      let resolved = if path.has_prefix("/") {
+        path
+      } else {
         match @env.get_env_var("PWD") {
           Some(cwd) => "\{cwd}/\{path}"
           None => path
         }
       }
-      "\"xz-xuezhe/moonblox\": { \"path\": \"" + resolved + "\" }"
+      "\"" + ENGINE_PACKAGE + "\": { \"path\": \"" + resolved + "\" }"
     }
-    None => "\"xz-xuezhe/moonblox\": \"" + version + "\""
+    None => "\"" + ENGINE_PACKAGE + "\": \"" + ENGINE_VERSION + "\""
   }
   let content = "{\n" +
-    "  \"name\": \"moonblox-build\",\n" +
+    "  \"name\": \"" +
+    PACKAGE_NAME +
+    "\",\n" +
     "  \"preferred-target\": \"js\",\n" +
     "  \"deps\": {\n" +
     "    " +
     engine_dep +
     ",\n" +
-    "    \"moonbit-community/rabbita\": \"0.12.4\",\n" +
-    "    \"mizchi/markdown\": \"0.6.2\"\n" +
+    "    \"" +
+    RABBITA_PACKAGE +
+    "\": \"" +
+    RABBITA_VERSION +
+    "\",\n" +
+    "    \"" +
+    MARKDOWN_PACKAGE +
+    "\": \"" +
+    MARKDOWN_VERSION +
+    "\"\n" +
     "  }\n" +
     "}\n"
   @fs.write_string_to_file("\{build_dir}/moon.mod.json", content)
@@ -191,11 +275,11 @@ fn generate_moon_mod(build_dir : String, version : String) -> Unit raise {
 ///|
 /// Generate root moon.pkg — shared package (no is-main), hosts _registry.mbt
 fn generate_root_moon_pkg(build_dir : String) -> Unit raise {
-  let comp_dir = "\{build_dir}/components"
+  let comp_dir = "\{build_dir}/\{COMPONENTS_DIR}"
   let parts : Array[String] = []
   parts.push("import {\n")
-  parts.push("  \"xz-xuezhe/moonblox/ast\",\n")
-  parts.push("  \"moonbit-community/rabbita\",\n")
+  parts.push("  \"" + ENGINE_AST_PACKAGE + "\",\n")
+  parts.push("  \"" + RABBITA_PACKAGE + "\",\n")
 
   // Import each component package
   if @fs.path_exists(comp_dir) {
@@ -215,15 +299,15 @@ fn generate_root_moon_pkg(build_dir : String) -> Unit raise {
 fn generate_page_moon_pkg(build_dir : String, slug : String) -> Unit raise {
   let parts : Array[String] = []
   parts.push("import {\n")
-  parts.push("  \"moonblox-build\" as @root,\n")
-  parts.push("  \"xz-xuezhe/moonblox/convert\",\n")
-  parts.push("  \"xz-xuezhe/moonblox/render\",\n")
-  parts.push("  \"moonbit-community/rabbita\",\n")
+  parts.push("  \"" + PACKAGE_NAME + "\" @root,\n")
+  parts.push("  \"" + ENGINE_CONVERT_PACKAGE + "\",\n")
+  parts.push("  \"" + ENGINE_RENDER_PACKAGE + "\",\n")
+  parts.push("  \"" + RABBITA_PACKAGE + "\",\n")
   parts.push("}\n\n")
   parts.push("supported_targets = \"js\"\n")
   parts.push("options(\n  \"is-main\": true,\n)\n")
   @fs.write_string_to_file(
-    "\{build_dir}/pages/\{slug}/moon.pkg",
+    "\{build_dir}/\{PAGES_DIR}/\{slug}/moon.pkg",
     join_strings(parts),
   )
 }
@@ -240,7 +324,7 @@ fn join_strings(ss : Array[String]) -> String {
 ///|
 /// Copy user's components/ into _moonblox/components/
 fn copy_components(src_root : String, build_dir : String) -> Unit raise {
-  let src = "\{src_root}/components"
+  let src = "\{src_root}/\{COMPONENTS_DIR}"
   guard @fs.path_exists(src) else { return }
   for name in @fs.read_dir(src) {
     let src_dir = "\{src}/\{name}"
@@ -248,7 +332,7 @@ fn copy_components(src_root : String, build_dir : String) -> Unit raise {
       let dst_dir = "\{build_dir}/components/\{name}"
       try! @fs.create_dir(dst_dir)
       for f in @fs.read_dir(src_dir) {
-        if f != "_build" && f != ".mooncakes" {
+        if f != BUILD_OUT_DIR && f != MOONCAKES_DIR {
           let src_file = "\{src_dir}/\{f}"
           if !@fs.is_dir(src_file) {
             @fs.write_string_to_file(
@@ -266,13 +350,13 @@ fn copy_components(src_root : String, build_dir : String) -> Unit raise {
 ///|
 /// Copy user's theme/ into _moonblox/theme/
 fn copy_theme(src_root : String, build_dir : String) -> Unit raise {
-  let src = "\{src_root}/theme"
+  let src = "\{src_root}/\{THEME_DIR}"
   guard @fs.path_exists(src) else { return }
   for f in @fs.read_dir(src) {
     let src_file = "\{src}/\{f}"
     if !@fs.is_dir(src_file) {
       @fs.write_string_to_file(
-        "\{build_dir}/theme/\{f}",
+        "\{build_dir}/\{THEME_DIR}/\{f}",
         @fs.read_file_to_string(src_file),
       )
     }
@@ -300,7 +384,7 @@ fn scan_components(dir : String, out_dir : String) -> Unit raise {
           } else {
             inline_s.push(comp_name)
           }
-          generate_props(mbt_path, comp_dir, comp_name)
+          generate_props(mbt_path, out_dir, comp_name)
         }
       }
     }
@@ -321,7 +405,7 @@ fn scan_components(dir : String, out_dir : String) -> Unit raise {
   for i = 0; i < inline_s.length(); i = i + 1 {
     let c = inline_s[i]
     sb.write_string(
-      "  m.set(\"\{c}\", fn(args) { @\{c}.\{c}_cell(@\{c}.\{c}_props(args)) })\n",
+      "  m.set(\"\{c}\", fn(args) { @\{c}.\{c}_cell(\{c}_props(args)) })\n",
     )
   }
   sb.write_string("  m\n}\n\n")
@@ -335,11 +419,11 @@ fn scan_components(dir : String, out_dir : String) -> Unit raise {
   for i = 0; i < container_s.length(); i = i + 1 {
     let c = container_s[i]
     sb.write_string(
-      "  m.set(\"\{c}\", fn(args, children) { @\{c}.\{c}_cell(@\{c}.\{c}_props(args), children) })\n",
+      "  m.set(\"\{c}\", fn(args, children) { @\{c}.\{c}_cell(\{c}_props(args), children) })\n",
     )
   }
   sb.write_string("  m\n}\n")
-  @fs.write_string_to_file("\{out_dir}/_registry.mbt", sb.to_string())
+  @fs.write_string_to_file("\{out_dir}/\{REGISTRY_FILE}", sb.to_string())
   println(
     "Generated: _registry.mbt (\{inline_s.length()} inline, \{container_s.length()} container)",
   )
@@ -349,15 +433,18 @@ fn scan_components(dir : String, out_dir : String) -> Unit raise {
 /// Collect CSS: theme/base.css + component .css files
 fn collect_css(build_dir : String) -> String raise {
   let sb = StringBuilder::new()
-  if @fs.path_exists("\{build_dir}/theme/base.css") {
+  if @fs.path_exists("\{build_dir}/\{THEME_DIR}/base.css") {
     try {
-      sb.write_string(@fs.read_file_to_string("\{build_dir}/theme/base.css"))
+      sb.write_string(
+        @fs.read_file_to_string("\{build_dir}/\{THEME_DIR}/base.css"),
+      )
       sb.write_char('\n')
     } catch {
-      _ => ()
+      @fs.IOError(msg) =>
+        println("Warning: failed to read theme/base.css: \{msg}")
     }
   }
-  let comp_dir = "\{build_dir}/components"
+  let comp_dir = "\{build_dir}/\{COMPONENTS_DIR}"
   if @fs.path_exists(comp_dir) {
     let subdirs = @fs.read_dir(comp_dir)
     subdirs.sort()
@@ -370,7 +457,8 @@ fn collect_css(build_dir : String) -> String raise {
           sb.write_char('\n')
           println("Collected: " + name + "/" + name + ".css")
         } catch {
-          _ => ()
+          @fs.IOError(msg) =>
+            println("Warning: failed to read \{name}.css: \{msg}")
         }
       }
     }
@@ -382,7 +470,7 @@ fn collect_css(build_dir : String) -> String raise {
 /// Parse Props::new() and generate _props.mbt
 fn generate_props(
   mbt_path : String,
-  comp_dir : String,
+  out_dir : String,
   comp_name : String,
 ) -> Unit raise {
   let content = @fs.read_file_to_string(mbt_path)
@@ -395,7 +483,7 @@ fn generate_props(
         None => return
         Some(end) => {
           let params_str = rest[0:end].trim().to_owned()
-          write_props_file(comp_dir, comp_name, params_str)
+          write_props_file(out_dir, comp_name, params_str)
         }
       }
     }
@@ -404,10 +492,11 @@ fn generate_props(
 
 ///|
 fn write_props_file(
-  comp_dir : String,
+  out_dir : String,
   comp_name : String,
   params_str : String,
 ) -> Unit raise {
+  let pkg_prefix = "@" + comp_name + "."
   let props_name = capitalize(comp_name) + "Props"
   let sb = StringBuilder::new()
   sb.write_string("// Auto-generated by scanner — DO NOT EDIT\n\n")
@@ -415,10 +504,11 @@ fn write_props_file(
     "pub fn " +
     comp_name +
     "_props(args : Map[String, @ast.Value]) -> " +
+    pkg_prefix +
     props_name +
     " {\n",
   )
-  sb.write_string("  " + props_name + "::new(\n")
+  sb.write_string("  " + pkg_prefix + props_name + "::new(\n")
 
   let params = split_top_level(params_str, ',')
   for i = 0; i < params.length(); i = i + 1 {
@@ -462,10 +552,10 @@ fn write_props_file(
   }
   sb.write_string("  )\n}\n")
   @fs.write_string_to_file(
-    comp_dir + "/" + comp_name + "_props.mbt",
+    out_dir + "/" + comp_name + PROPS_SUFFIX,
     sb.to_string(),
   )
-  println("Generated: " + comp_name + "_props.mbt")
+  println("Generated: " + comp_name + PROPS_SUFFIX)
 }
 
 ///|
@@ -475,7 +565,7 @@ fn capitalize(s : String) -> String {
   } else {
     match s.get_char(0) {
       Some(c) if c >= 'a' && c <= 'z' => {
-        let upper = Char::from_int(c.to_int() - 32)
+        let upper = Int::unsafe_to_char(c.to_int() - 32)
         upper.to_string() + s[1:].to_owned()
       }
       _ => s
@@ -608,10 +698,18 @@ fn generate_list_html(posts : Array[PostMeta], dist_dir : String) -> Unit raise 
 
   sb.write_string("  </main>\n")
   sb.write_string("</body>\n</html>\n")
-  @fs.write_string_to_file("\{dist_dir}/index.html", sb.to_string()) catch {
-    _ => ()
-  }
+  @fs.write_string_to_file("\{dist_dir}/\{INDEX_HTML}", sb.to_string())
   println("Generated: list page (\{posts.length()} articles)")
+}
+
+// --- Template helpers ---
+
+///|
+/// Simple placeholder replacement: __TITLE__ and __SLUG__
+fn fill_template(template : String, title : String, slug : String) -> String {
+  template
+  .replace_all(old="__TITLE__", new=title)
+  .replace_all(old="__SLUG__", new=slug)
 }
 
 // --- Code generation ---
@@ -641,7 +739,7 @@ pub fn generate_main_mbt(md_content : String) -> String {
     $|  let md = "\{escaped}"
     $|  let doc = @convert.parse_markdown(md)
     $|  let cell = @render.render_document(doc, inline_cells=@root.inline_cells(), container_cells=@root.container_cells())
-    $|  @rabbita.new(cell).mount("app")
+    $|  @rabbita.new(cell).mount("\{MOUNT_ID}")
     $|}
   s
 }

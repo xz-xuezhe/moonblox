@@ -41,7 +41,6 @@ fn md_inline_to_html(inline : @markdown.Inline) -> @rabbita.Html {
       if title == "" {
         @html.a(href=url, kids)
       } else {
-        let empty : Array[@rabbita.Html] = []
         @html.a(href=url, title~, kids)
       }
     }

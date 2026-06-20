@@ -1,0 +1,5 @@
+{
+  "input": "posts",
+  "output": "dist",
+  "components": "./components"
+}
