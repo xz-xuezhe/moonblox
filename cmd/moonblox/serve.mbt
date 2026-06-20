@@ -34,6 +34,8 @@ pub async fn serve(dir : String, port : Int) -> Unit {
   println("Watching for changes...")
   while true {
     watcher.wait_any()
+    // Debounce: wait for filesystem to settle after batch changes
+    @async.sleep(300)
     println("Change detected, rebuilding...")
     let _ = build(dir)
     println("Rebuilt. Refresh browser to see changes.")
@@ -106,7 +108,7 @@ fn inject_reload_script(html : String) -> String {
     #|(function() {
     #|  var ws = new WebSocket('ws://' + location.host + '/__moonblox/events');
     #|  ws.onmessage = function(e) { if (e.data === 'reload') location.reload(); };
-    #|  ws.onclose = function() { setTimeout(function() { location.reload(); }, 2000); };
+    #|  ws.onclose = function() { console.log('[moonblox] live reload disconnected'); };
     #|})();
     #|</script>
     #|
