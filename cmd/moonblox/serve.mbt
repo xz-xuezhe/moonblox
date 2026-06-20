@@ -7,38 +7,69 @@ pub async fn serve(dir : String, port : Int) -> Unit {
   }
 
   let dist_dir = "\{dir}/dist"
+  let port : UInt = port.to_uint()
 
   // Initial build
   println("Building...")
   let _ = build(dir)
 
-  // Setup file watcher
+  // Setup file watcher (warren pattern: watch source dir, filter build artifacts)
   let watcher = @afs.Watcher(dir, ignored_paths=fn(path) {
     path.contains("_moonblox") ||
-    path.contains("dist/") ||
-    path.contains(".mooncakes")
+    path.contains("dist") ||
+    path.contains(".mooncakes") ||
+    path.contains("_build")
   })
 
-  // Start HTTP server (exact warren pattern)
+  // Start HTTP server
   let server = @http.Server(@socket.Addr::parse("127.0.0.1:\{port}"), reuse_addr=true)
   println("  Server: http://localhost:\{port}")
 
-  // Match warren's run_forever call exactly
-  let _ = server.run_forever(
-    (request, _, conn) => handle_request(dist_dir, request, conn),
-    allow_failure=true,
-    max_connections=64,
-  )
+  // Subscriber management (warren pattern)
+  let subscribers : Ref[Map[Int, @async.Queue[BroadcastMsg]]] = Ref({})
+  let next_id : Ref[Int] = Ref(0)
 
-  // Watch → rebuild loop
-  println("Watching for changes...")
-  while true {
-    watcher.wait_any()
-    // Debounce: wait for filesystem to settle after batch changes
-    @async.sleep(300)
-    println("Change detected, rebuilding...")
-    let _ = build(dir)
-    println("Rebuilt. Refresh browser to see changes.")
+  @async.with_task_group(group => {
+    // Spawn HTTP server in background (warren: no_wait=true)
+    group.spawn_bg(no_wait=true, allow_failure=true, () => {
+      let _ = server.run_forever(
+        (request, _, conn) => handle_request(
+          dist_dir, request, conn, subscribers, next_id,
+        ),
+        allow_failure=true,
+        max_connections=64,
+      )
+    })
+
+    println("Watching for changes...")
+    // Warren pattern: build first, then wait
+    while true {
+      watcher.wait_any()
+      println("Change detected, rebuilding...")
+      let _ = build(dir)
+      broadcast(subscribers, BroadcastMsg::Reload)
+      println("Rebuilt.")
+    }
+  })
+}
+
+///|
+pub(all) enum BroadcastMsg {
+  Building
+  Reload
+  BuildFailed(String)
+} derive(Debug)
+
+///|
+fn broadcast(
+  subscribers : Ref[Map[Int, @async.Queue[BroadcastMsg]]],
+  msg : BroadcastMsg,
+) -> Unit {
+  for entry in subscribers.val.iter() {
+    let (_, queue) = entry
+    ignore(queue.try_put(msg)) catch {
+      _ => ()
+    }
   }
 }
 
@@ -47,8 +78,9 @@ async fn handle_request(
   dist_dir : String,
   request : @http.Request,
   conn : @http.ServerConnection,
+  subscribers : Ref[Map[Int, @async.Queue[BroadcastMsg]]],
+  next_id : Ref[Int],
 ) -> Unit {
-  // Match warren's Meth is Get guard
   guard request.meth is Get else {
     conn
     ..send_response(405, "Method Not Allowed", extra_headers={"Content-Type": "text/plain"})
@@ -57,15 +89,42 @@ async fn handle_request(
     return
   }
 
-  // WebSocket upgrade
-  if request.path == "/__moonblox/events" {
+  let path = if request.path == "/" { "/index.html" } else { request.path }
+
+  // WebSocket upgrade — warren's exact handle_ws pattern
+  if path == "/__moonblox/events" {
     let ws = @websocket.from_http_server(request, conn)
     defer ws.close()
-    let _ = ws.send_text("connected")
+    let id = next_id.val
+    next_id.val = id + 1
+    let queue = @async.Queue(kind=DiscardOldest(32))
+    subscribers.val.set(id, queue)
+    defer subscribers.val.remove(id)
+    @async.with_task_group(group => {
+      group.spawn_bg(allow_failure=true, () => {
+        while queue.get() is msg {
+          match msg {
+            Building => ws.send_text("building") catch { _ => break }
+            Reload => ws.send_text("reload") catch { _ => break }
+            BuildFailed(_) => ()
+          }
+        }
+      })
+      try {
+        for ;; {
+          let _ = ws.recv()
+        }
+      } catch {
+        _ => ()
+      }
+      group.return_immediately(()) catch {
+        _ => ()
+      }
+    })
     return
   }
 
-  let path = if request.path == "/" { "/index.html" } else { request.path }
+  // Serve file from dist/ (warren pattern: VFS read)
   let mut file_path = "\{dist_dir}\{path}"
   if @fs.path_exists(file_path) && @fs.is_dir(file_path) {
     file_path = "\{file_path}/index.html"
@@ -81,7 +140,6 @@ async fn handle_request(
     "application/octet-stream"
   }
 
-  // Serve file or 404 (match warren's VFS pattern)
   if @fs.path_exists(file_path) && !@fs.is_dir(file_path) {
     let content = @fs.read_file_to_string(file_path)
     let body = if file_path.has_suffix(".html") {
