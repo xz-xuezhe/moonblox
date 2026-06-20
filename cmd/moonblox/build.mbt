@@ -163,7 +163,15 @@ fn remove_dir_all(dir : String) -> Unit raise {
 /// Generate moon.mod.json
 fn generate_moon_mod(build_dir : String, version : String) -> Unit raise {
   let engine_dep = match @env.get_env_var("MOONBLOX_PATH") {
-    Some(path) => "\"xz-xuezhe/moonblox\": { \"path\": \"" + path + "\" }"
+    Some(path) => {
+      let resolved = if path.has_prefix("/") { path } else {
+        match @env.get_env_var("PWD") {
+          Some(cwd) => "\{cwd}/\{path}"
+          None => path
+        }
+      }
+      "\"xz-xuezhe/moonblox\": { \"path\": \"" + resolved + "\" }"
+    }
     None => "\"xz-xuezhe/moonblox\": \"" + version + "\""
   }
   let content = "{\n" +
