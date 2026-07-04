@@ -1120,11 +1120,27 @@ pub async fn build(dir : String) -> Bool {
     @fs.write_string_to_file("\{page_dist}/\{INDEX_HTML}", html)
   }
 
+  ///|
+  /// Strip non-digit characters from a date string for numeric comparison.
+  /// E.g., "2024-01-15" -> "20240115", "Jan 2024" -> "2024"
+  fn date_to_sortable(d : String) -> String {
+    let result = StringBuilder::new()
+    for i = 0; i < d.length(); i = i + 1 {
+      match d.get_char(i) {
+        Some(c) if c >= '0' && c <= '9' => result.write_char(c)
+        _ => ()
+      }
+    }
+    result.to_string()
+  }
+
   // Sort posts by date descending for list page
   posts.sort_by(fn(a, b) {
-    if a.date > b.date {
+    let da = date_to_sortable(a.date)
+    let db = date_to_sortable(b.date)
+    if da > db {
       -1
-    } else if a.date < b.date {
+    } else if da < db {
       1
     } else {
       0
