@@ -55,6 +55,7 @@ value:
   | name=IDENT LPAREN args=args_opt RPAREN {
     @ast.Value::Funcall(name, args)
   }
+  | name=IDENT { @ast.Value::Var(name) }
 
 array:
   | LBRACKET RBRACKET { [] }

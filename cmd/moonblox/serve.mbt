@@ -6,7 +6,8 @@ pub async fn serve(dir : String, port : Int) -> Unit {
     return
   }
 
-  let dist_dir = "\{dir}/\{DIST_DIR}"
+  let config = read_config(dir)
+  let dist_dir = "\{dir}/\{config.output}"
   let port : UInt = port.reinterpret_as_uint()
 
   // Initial build
@@ -20,7 +21,7 @@ pub async fn serve(dir : String, port : Int) -> Unit {
   // Setup file watcher (warren pattern: watch source dir, filter build artifacts)
   let watcher = @afs.Watcher(dir, ignored_paths=fn(path) {
     path.contains(BUILD_DIR_NAME) ||
-    path.contains(DIST_DIR) ||
+    path.contains(config.output) ||
     path.contains(MOONCAKES_DIR) ||
     path.contains(BUILD_OUT_DIR)
   })

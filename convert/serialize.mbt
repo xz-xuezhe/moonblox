@@ -120,6 +120,7 @@ fn args_to_md(args : Map[String, @ast.Value]) -> String {
         sb.write_string(name)
         sb.write_string(args_to_md(fn_args))
       }
+      @ast.Value::Var(s) => sb.write_string(s)
       _ => sb.write_string("...")
     }
   }

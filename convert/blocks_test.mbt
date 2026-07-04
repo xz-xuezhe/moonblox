@@ -116,3 +116,41 @@ test "parse_markdown: blockquote" {
     _ => assert_eq("expected BlockQuote", "")
   }
 }
+
+///|
+test "parse_markdown: structured block with shared state" {
+  // ::section { count: 0 } @counter(value=count) ::
+  //   → ContainerComponent with shared state variables and body content
+  let doc = parse_markdown("::section { count: 0 } @counter(value=count) ::")
+  assert_eq(doc.children.length(), 1)
+  match doc.children[0] {
+    @ast.Block::ContainerComponent(cc) => {
+      assert_eq(cc.name, "section")
+      match cc.args["count"] {
+        @ast.Value::Number(n) => assert_eq(n, 0.0)
+        _ => assert_eq("expected Number in count", "")
+      }
+    }
+    _ => assert_eq("expected ContainerComponent", "")
+  }
+}
+
+///|
+test "parse_markdown: structured block multiline" {
+  // ::wrapper { value: 5 }
+  // @counter(value=value)
+  // ::
+  let md = "::wrapper { value: 5 }\n@counter(value=value)\n::"
+  let doc = parse_markdown(md)
+  assert_eq(doc.children.length(), 1)
+  match doc.children[0] {
+    @ast.Block::ContainerComponent(cc) => {
+      assert_eq(cc.name, "wrapper")
+      match cc.args["value"] {
+        @ast.Value::Number(n) => assert_eq(n, 5.0)
+        _ => assert_eq("expected Number in value", "")
+      }
+    }
+    _ => assert_eq("expected ContainerComponent", "")
+  }
+}

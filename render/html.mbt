@@ -113,8 +113,68 @@ fn render_block(
     }
     @ast.Block::List(lst) =>
       @rabbita.static_cell(render_list(lst, inline_cells, container_cells))
+    @ast.Block::Table(t) => @rabbita.static_cell(render_table(t, inline_cells))
     @ast.Block::ThematicBreak => @rabbita.static_cell(@html.hr())
   }
+}
+
+///|
+fn render_table(
+  t : @ast.BlockTable,
+  inline_cells : Map[String, (Map[String, @ast.Value]) -> @rabbita.Cell],
+) -> @rabbita.Html {
+  let align_attr = fn(align : @markdown.TableAlign) -> String {
+    match align {
+      @markdown.TableAlign::Left => "left"
+      @markdown.TableAlign::Center => "center"
+      @markdown.TableAlign::Right => "right"
+      @markdown.TableAlign::None => ""
+    }
+  }
+
+  let render_cell = fn(
+    cell : @ast.BlockTableCell,
+    tag : String,
+    align : @markdown.TableAlign,
+  ) -> @rabbita.Html {
+    let kids = render_inlines(cell.children, inline_cells)
+    let attrs = match align {
+      @markdown.TableAlign::None => @html.Attrs::build()
+      a => @html.Attrs::build().align(align_attr(a))
+    }
+    @html.node(tag, attrs, kids)
+  }
+
+  let header_cells : Array[@rabbita.Html] = []
+  for i = 0; i < t.header.length(); i = i + 1 {
+    let cell = t.header[i]
+    let align = if i < t.alignments.length() {
+      t.alignments[i]
+    } else {
+      @markdown.TableAlign::None
+    }
+    header_cells.push(render_cell(cell, "th", align))
+  }
+  let thead = @html.thead([@html.tr(header_cells)])
+
+  let body_rows : Array[@rabbita.Html] = []
+  for i = 0; i < t.rows.length(); i = i + 1 {
+    let row = t.rows[i]
+    let cells : Array[@rabbita.Html] = []
+    for j = 0; j < row.length(); j = j + 1 {
+      let cell = row[j]
+      let align = if j < t.alignments.length() {
+        t.alignments[j]
+      } else {
+        @markdown.TableAlign::None
+      }
+      cells.push(render_cell(cell, "td", align))
+    }
+    body_rows.push(@html.tr(cells))
+  }
+  let tbody = @html.tbody(body_rows)
+
+  @html.table([thead, tbody])
 }
 
 ///|
@@ -189,7 +249,7 @@ fn render_list(
 // --- Document rendering ---
 
 ///|
-/// Build a Cell tree for the document body.
+/// Build a Cell tree for the document body, injecting front-matter metadata.
 pub fn render_document(
   doc : @ast.Document,
   inline_cells? : Map[String, (Map[String, @ast.Value]) -> @rabbita.Cell] = Map([],
@@ -200,6 +260,21 @@ pub fn render_document(
   ] = Map([]),
 ) -> @rabbita.Cell {
   let children : Array[@rabbita.Html] = []
+  // Inject title from front matter
+  match doc.meta.get("title") {
+    Some(title) =>
+      children.push(@html.h1(class="page-title", [@html.text(title)]))
+    None => ()
+  }
+  // Inject date from front matter
+  match doc.meta.get("date") {
+    Some(date) =>
+      children.push(
+        @html.time(class="page-date", datetime=date, [@html.text(date)]),
+      )
+    None => ()
+  }
+  // Render document blocks
   for i = 0; i < doc.children.length(); i = i + 1 {
     let cell = render_block(doc.children[i], inline_cells, container_cells)
     children.push(cell.view())

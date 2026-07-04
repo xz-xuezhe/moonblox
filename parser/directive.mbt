@@ -13,6 +13,41 @@ pub fn parse_inline_directive(
 }
 
 ///|
+/// Parse a structured block header: ::name { key: val, ... }
+/// Strips :: prefix, wraps as name({ ... }) to use the existing directive parser,
+/// and extracts the record contents as the args map.
+pub fn parse_structured_header(
+  input : String,
+) -> (String, Map[String, @ast.Value])? {
+  let trimmed = input.trim().to_owned()
+  let len = trimmed.length()
+  guard len >= 2 else { return None }
+  guard trimmed.get_char(0) is Some(':') else { return None }
+  guard trimmed.get_char(1) is Some(':') else { return None }
+  let inner = trimmed[2:].trim().to_owned()
+  match inner.find("{") {
+    None => None
+    Some(brace_idx) => {
+      let name = inner[0:brace_idx].trim().to_owned()
+      if name == "" {
+        return None
+      }
+      let rest = inner[brace_idx:].trim().to_owned()
+      let wrapped = name + "(" + rest + ")"
+      match parse_inline_directive(wrapped) {
+        Some((_, args)) =>
+          // The record was parsed as a single arg with key "_"
+          match args["_"] {
+            @ast.Value::Record(rec) => Some((name, rec))
+            _ => Some((name, Map([])))
+          }
+        None => None
+      }
+    }
+  }
+}
+
+///|
 /// Parse a container block header: :::name(key: val, ...)
 /// Returns (name, args) on success
 pub fn parse_container_header(

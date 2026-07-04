@@ -8,6 +8,7 @@ let page_shell : String =
   #|  <meta charset="UTF-8">
   #|  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   #|  <title>__TITLE__</title>
+  #|  __META_TAGS__
   #|  <link rel="stylesheet" href="../style.css">
   #|</head>
   #|<body>

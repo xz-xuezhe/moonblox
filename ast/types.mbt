@@ -10,6 +10,7 @@ pub(all) enum Value {
   Array(Array[Value])
   Record(Map[String, Value])
   Funcall(String, Map[String, Value])
+  Var(String) // identifier reference for variable binding
 }
 
 // Inline nodes: either standard mdast or our custom component
@@ -30,7 +31,20 @@ pub(all) enum Block {
   ContainerComponent(BlockContainer)
   BlockQuote(Array[Block])
   List(BlockList)
+  Table(BlockTable)
   ThematicBreak
+}
+
+///|
+pub(all) struct BlockTable {
+  header : Array[BlockTableCell]
+  alignments : Array[@markdown.TableAlign]
+  rows : Array[Array[BlockTableCell]]
+}
+
+///|
+pub(all) struct BlockTableCell {
+  children : Array[Inline]
 }
 
 ///|

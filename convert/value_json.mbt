@@ -53,6 +53,13 @@ pub fn value_to_json(v : @ast.Value) -> String {
       sb.write_char('}')
       sb.to_string()
     }
+    @ast.Value::Var(s) => {
+      let sb = StringBuilder::new()
+      sb.write_char('"')
+      sb.write_string(escape_json(s))
+      sb.write_char('"')
+      sb.to_string()
+    }
   }
 }
 
