@@ -1,0 +1,25 @@
+///|
+pub fn chart(
+  value? : Double = 0.0,
+  max? : Double = 100.0,
+  label? : String = "",
+) -> @rabbita.Html {
+  let pct = if max <= 0.0 { 0.0 } else { value / max * 100.0 }
+  let empty : Array[@rabbita.Html] = []
+  let label_kids = if label == "" {
+    empty
+  } else {
+    [@html.span(class="chart__label", [@html.text(label)])]
+  }
+  @html.div(
+    class="chart",
+    label_kids +
+    [
+      @html.div(class="chart__track", [
+        @html.div(class="chart__fill", style=["width: \{pct.to_string()}%"], [
+          @html.text(value.to_string()),
+        ]),
+      ]),
+    ],
+  )
+}

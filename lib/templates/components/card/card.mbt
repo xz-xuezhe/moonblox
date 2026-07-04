@@ -1,0 +1,22 @@
+///|
+pub fn card(
+  children : Array[@rabbita.Html],
+  title? : String = "",
+  image? : String = "",
+) -> @rabbita.Html {
+  let empty : Array[@rabbita.Html] = []
+  let title_kids = if title == "" {
+    empty
+  } else {
+    [@html.div(class="card__title", [@html.text(title)])]
+  }
+  let image_kids = if image == "" {
+    empty
+  } else {
+    [@html.img(class="card__image", src=image, alt=title)]
+  }
+  @html.div(
+    class="card",
+    image_kids + title_kids + [@html.div(class="card__body", children)],
+  )
+}

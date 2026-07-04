@@ -88,5 +88,80 @@ options(
       "input": "../../lib/templates/components/callout/moon.pkg",
       "output": "callout_moon_pkg.mbt",
     },
+    {
+      "command": ":embed -i $input -o $output --name card_mbt",
+      "input": "../../lib/templates/components/card/card.mbt",
+      "output": "card_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name card_css",
+      "input": "../../lib/templates/components/card/card.css",
+      "output": "card_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name card_moon_pkg",
+      "input": "../../lib/templates/components/card/moon.pkg",
+      "output": "card_moon_pkg.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name grid_mbt",
+      "input": "../../lib/templates/components/grid/grid.mbt",
+      "output": "grid_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name grid_css",
+      "input": "../../lib/templates/components/grid/grid.css",
+      "output": "grid_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name grid_moon_pkg",
+      "input": "../../lib/templates/components/grid/moon.pkg",
+      "output": "grid_moon_pkg.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name metric_mbt",
+      "input": "../../lib/templates/components/metric/metric.mbt",
+      "output": "metric_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name metric_css",
+      "input": "../../lib/templates/components/metric/metric.css",
+      "output": "metric_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name metric_moon_pkg",
+      "input": "../../lib/templates/components/metric/moon.pkg",
+      "output": "metric_moon_pkg.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name chart_mbt",
+      "input": "../../lib/templates/components/chart/chart.mbt",
+      "output": "chart_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name chart_css",
+      "input": "../../lib/templates/components/chart/chart.css",
+      "output": "chart_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name chart_moon_pkg",
+      "input": "../../lib/templates/components/chart/moon.pkg",
+      "output": "chart_moon_pkg.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name graph_mbt",
+      "input": "../../lib/templates/components/graph/graph.mbt",
+      "output": "graph_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name graph_css",
+      "input": "../../lib/templates/components/graph/graph.css",
+      "output": "graph_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name graph_moon_pkg",
+      "input": "../../lib/templates/components/graph/moon.pkg",
+      "output": "graph_moon_pkg.mbt",
+    },
   ],
 )

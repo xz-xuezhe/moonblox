@@ -39,6 +39,11 @@ fn do_scaffold(dir : String) -> Unit raise {
   scaffold_component(dir, "badge", badge_mbt, badge_css, badge_moon_pkg)
   scaffold_component(dir, "counter", counter_mbt, counter_css, counter_moon_pkg)
   scaffold_component(dir, "callout", callout_mbt, callout_css, callout_moon_pkg)
+  scaffold_component(dir, "card", card_mbt, card_css, card_moon_pkg)
+  scaffold_component(dir, "grid", grid_mbt, grid_css, grid_moon_pkg)
+  scaffold_component(dir, "metric", metric_mbt, metric_css, metric_moon_pkg)
+  scaffold_component(dir, "chart", chart_mbt, chart_css, chart_moon_pkg)
+  scaffold_component(dir, "graph", graph_mbt, graph_css, graph_moon_pkg)
 
   println("Created MoonBlox site at \{dir}/")
   println("  cd \{dir} && moonblox build")
