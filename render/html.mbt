@@ -67,8 +67,9 @@ fn md_inline_to_html(inline : @markdown.Inline) -> @rabbita.Html {
     }
     @markdown.Inline::RefLink(children~, ..) =>
       @html.span(md_inlines_to_html(children))
-    @markdown.Inline::RefImage(..) | @markdown.Inline::FootnoteReference(..) =>
-      @html.text("")
+    @markdown.Inline::FootnoteReference(label~, ..) =>
+      @html.sup([@html.text("[^" + label + "]")])
+    @markdown.Inline::RefImage(alt~, ..) => @html.text("![" + alt + "]")
   }
 }
 

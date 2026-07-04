@@ -166,7 +166,10 @@ fn convert_block(block : @markdown.Block, source : String) -> Array[@ast.Block] 
         }),
       ]
     }
-    @markdown.Block::FootnoteDefinition(..) => []
+    @markdown.Block::FootnoteDefinition(span~, ..) => {
+      let inlines = parse_span_inlines(source, span)
+      [@ast.Block::Paragraph({ children: inlines })]
+    }
   }
 }
 
