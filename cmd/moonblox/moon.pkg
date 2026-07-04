@@ -10,6 +10,7 @@ import {
   "moonbitlang/async/socket",
   "moonbitlang/async/websocket",
   "Yoorkin/ArgParser",
+  "xz-xuezhe/moonblox/convert",
 }
 
 supported_targets = "native"

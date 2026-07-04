@@ -1040,12 +1040,22 @@ pub async fn build(dir : String) -> Bool {
             generate_main_mbt(processed_content),
           )
           println("Generated: pages/\{slug}/")
-          let meta = extract_frontmatter(content)
+          let doc = @convert.parse_markdown(content)
+          let meta = doc.meta
           posts.push(PostMeta::{
             slug,
-            title: get_meta(meta, "title", slug),
-            date: get_meta(meta, "date", ""),
-            tags: get_meta(meta, "tags", ""),
+            title: match meta.get("title") {
+              Some(t) => t
+              None => slug
+            },
+            date: match meta.get("date") {
+              Some(d) => d
+              None => ""
+            },
+            tags: match meta.get("tags") {
+              Some(t) => t
+              None => ""
+            },
           })
         } catch {
           @fs.IOError(msg) => println("Warning: skipping '\{name}': \{msg}")
@@ -1766,49 +1776,6 @@ fn slug_from_filename(filename : String) -> String {
     filename[0:filename.length() - 3].to_owned()
   } else {
     filename
-  }
-}
-
-///|
-/// Extract YAML front matter as Map from raw markdown content
-fn extract_frontmatter(content : String) -> Map[String, String] {
-  if content.has_prefix("---") {
-    let rest = content[3:].to_owned()
-    match rest.find("\n---") {
-      Some(end) => {
-        let yaml = rest[0:end].trim().to_owned()
-        let map : Map[String, String] = Map([])
-        for line in yaml.split("\n") {
-          let line = line.trim().to_owned()
-          match line.find(":") {
-            Some(colon) if colon > 0 => {
-              let key = line[0:colon].trim().to_owned()
-              let value = line[colon + 1:].trim().to_owned()
-              if key != "" {
-                map.set(key, value)
-              }
-            }
-            _ => ()
-          }
-        }
-        map
-      }
-      None => Map([])
-    }
-  } else {
-    Map([])
-  }
-}
-
-///|
-fn get_meta(
-  meta : Map[String, String],
-  key : String,
-  default : String,
-) -> String {
-  match meta.get(key) {
-    Some(v) => v
-    None => default
   }
 }
 
