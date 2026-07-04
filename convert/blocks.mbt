@@ -136,7 +136,8 @@ fn convert_block(block : @markdown.Block, source : String) -> Array[@ast.Block] 
             if trimmed == ":::" {
               [@ast.Block::Paragraph({ children: [wrap_md_text(":::")] })]
             } else {
-              []
+              // Parse failed — treat as visible text
+              [@ast.Block::Paragraph({ children: [wrap_md_text(html)] })]
             }
         }
       } else if trimmed.has_prefix("::") && trimmed.contains("{") {
@@ -149,6 +150,9 @@ fn convert_block(block : @markdown.Block, source : String) -> Array[@ast.Block] 
       } else if trimmed == "::" {
         // Closing :: — consumed
         []
+      } else if trimmed != "" {
+        // Preserve raw HTML content as visible text
+        [@ast.Block::Paragraph({ children: [wrap_md_text(html)] })]
       } else {
         []
       }
