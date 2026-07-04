@@ -34,6 +34,9 @@ const BUILD_OUT_DIR : String = "_build"
 const BUILD_ARTIFACT_PATH : String = "_build/js/release/build"
 
 ///|
+const BUILD_ARTIFACT_PATH_DEBUG : String = "_build/js/debug/build"
+
+///|
 const PACKAGE_NAME : String = "moonblox-build"
 
 ///|
@@ -976,8 +979,8 @@ fn date_to_sortable(d : String) -> String {
 }
 
 ///|
-/// moonblox build — generate temp project in _moonblox/, compile, assemble dist/
-pub async fn build(dir : String) -> Bool {
+/// moonblox build — generate temp project in _moonblox/, compile, assemble output
+pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
   guard @fs.path_exists(dir) else {
     println("Error: directory not found: \{dir}")
     return false
@@ -1115,71 +1118,120 @@ pub async fn build(dir : String) -> Bool {
   let css = collect_css(build_dir)
 
   // Run moon build
-  println("Building JS...")
-  let result = @process.run(
-    "moon",
-    ["build", "--target", "js", "--release"],
-    cwd=build_dir,
-  )
+  let moon_args = if dev_mode {
+    println("Building JS (debug)...")
+    ["build", "--target", "js"]
+  } else {
+    println("Building JS (release)...")
+    ["build", "--target", "js", "--release"]
+  }
+  let result = @process.run("moon", moon_args, cwd=build_dir)
   guard result == 0 else {
     println("Error: moon build failed with exit code \{result}")
     return false
   }
 
-  // Assemble dist/
-  let dist_dir = "\{dir}/\{config.output}"
-  if @fs.path_exists(dist_dir) {
-    remove_dir_all(dist_dir)
+  // --- Output Assembly ---
+  let artifact_path = if dev_mode {
+    BUILD_ARTIFACT_PATH_DEBUG
+  } else {
+    BUILD_ARTIFACT_PATH
   }
-  try! @fs.create_dir(dist_dir)
+  let js_dir = "\{build_dir}/\{artifact_path}"
 
-  // Copy per-page JS and generate HTML shells
-  let js_dir = "\{build_dir}/\{BUILD_ARTIFACT_PATH}"
-  for i = 0; i < posts.length(); i = i + 1 {
-    let slug = posts[i].slug
-    let page_dist = "\{dist_dir}/\{slug}"
-    try! @fs.create_dir(page_dist)
-    // Copy JS
-    let js_src = "\{js_dir}/\{PAGES_DIR}/\{slug}/\{slug}.js"
-    if @fs.path_exists(js_src) {
-      @fs.write_string_to_file(
-        "\{page_dist}/\{slug}.js",
-        @fs.read_file_to_string(js_src),
+  if dev_mode {
+    // Dev mode: write HTML/CSS directly into build output (skip JS copying, skip dist/)
+    let output_dir = js_dir
+    let pages_dir = "\{output_dir}/\{PAGES_DIR}"
+
+    // Write per-page HTML shells alongside their JS files
+    for i = 0; i < posts.length(); i = i + 1 {
+      let slug = posts[i].slug
+      let page_dir = "\{pages_dir}/\{slug}"
+      try! @fs.create_dir(page_dir)
+      let html = fill_template(
+        page_shell,
+        posts[i].title,
+        slug,
+        build_meta_tags(posts[i]),
+      ).replace_all(old="../style.css", new="../../style.css")
+      @fs.write_string_to_file("\{page_dir}/\{INDEX_HTML}", html)
+    }
+
+    // Write list page HTML
+    let list_page_dir = "\{pages_dir}/index"
+    try! @fs.create_dir(list_page_dir)
+    let list_html = fill_template(page_shell, "Articles", "index", "").replace_all(
+      old="../style.css",
+      new="../../style.css",
+    )
+    @fs.write_string_to_file("\{list_page_dir}/\{INDEX_HTML}", list_html)
+
+    // Write CSS to build output root
+    if css != "" {
+      @fs.write_string_to_file("\{output_dir}/\{STYLE_CSS}", css) catch {
+        @fs.IOError(msg) =>
+          println("Warning: failed to write style.css: \{msg}")
+      }
+    }
+
+    println("Built (dev): \{output_dir}/")
+  } else {
+    // Production: assemble dist/
+    let dist_dir = "\{dir}/\{config.output}"
+    if @fs.path_exists(dist_dir) {
+      remove_dir_all(dist_dir)
+    }
+    try! @fs.create_dir(dist_dir)
+
+    // Copy per-page JS and generate HTML shells
+    for i = 0; i < posts.length(); i = i + 1 {
+      let slug = posts[i].slug
+      let page_dist = "\{dist_dir}/\{slug}"
+      try! @fs.create_dir(page_dist)
+      // Copy JS
+      let js_src = "\{js_dir}/\{PAGES_DIR}/\{slug}/\{slug}.js"
+      if @fs.path_exists(js_src) {
+        @fs.write_string_to_file(
+          "\{page_dist}/\{slug}.js",
+          @fs.read_file_to_string(js_src),
+        )
+        println("Copied: \{slug}.js -> dist/\{slug}/")
+      }
+      // Write page HTML shell with metadata
+      let html = fill_template(
+        page_shell,
+        posts[i].title,
+        slug,
+        build_meta_tags(posts[i]),
       )
-      println("Copied: \{slug}.js -> dist/\{slug}/")
+      @fs.write_string_to_file("\{page_dist}/\{INDEX_HTML}", html)
     }
-    // Write page HTML shell with metadata
-    let html = fill_template(
-      page_shell,
-      posts[i].title,
-      slug,
-      build_meta_tags(posts[i]),
-    )
-    @fs.write_string_to_file("\{page_dist}/\{INDEX_HTML}", html)
-  }
 
-  // Handle list page (slug "index") — copy JS and write HTML to dist root
-  let list_js_src = "\{js_dir}/\{PAGES_DIR}/index/index.js"
-  if @fs.path_exists(list_js_src) {
-    @fs.write_string_to_file(
-      "\{dist_dir}/index.js",
-      @fs.read_file_to_string(list_js_src),
-    )
-    println("Copied: index.js -> dist/")
-  }
-  let list_html = fill_template(page_shell, "Articles", "index", "").replace_all(
-    old="../style.css",
-    new="style.css",
-  )
-  @fs.write_string_to_file("\{dist_dir}/\{INDEX_HTML}", list_html)
-
-  if css != "" {
-    @fs.write_string_to_file("\{dist_dir}/\{STYLE_CSS}", css) catch {
-      @fs.IOError(msg) => println("Warning: failed to write style.css: \{msg}")
+    // Handle list page (slug "index") — copy JS and write HTML to dist root
+    let list_js_src = "\{js_dir}/\{PAGES_DIR}/index/index.js"
+    if @fs.path_exists(list_js_src) {
+      @fs.write_string_to_file(
+        "\{dist_dir}/index.js",
+        @fs.read_file_to_string(list_js_src),
+      )
+      println("Copied: index.js -> dist/")
     }
-  }
+    let list_html = fill_template(page_shell, "Articles", "index", "").replace_all(
+      old="../style.css",
+      new="style.css",
+    )
+    @fs.write_string_to_file("\{dist_dir}/\{INDEX_HTML}", list_html)
 
-  println("Built: \{dist_dir}/")
+    if css != "" {
+      @fs.write_string_to_file("\{dist_dir}/\{STYLE_CSS}", css) catch {
+        @fs.IOError(msg) =>
+          println("Warning: failed to write style.css: \{msg}")
+      }
+    }
+
+    println("Built: \{dist_dir}/")
+  }
   true
 }
 

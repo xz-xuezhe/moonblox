@@ -6,13 +6,13 @@ pub async fn serve(dir : String, port : Int) -> Unit {
     return
   }
 
-  let config = read_config(dir)
-  let dist_dir = "\{dir}/\{config.output}"
+  let build_root = "\{dir}/\{BUILD_DIR_NAME}"
+  let dist_dir = "\{build_root}/_build/js/debug/build"
   let port : UInt = port.reinterpret_as_uint()
 
-  // Initial build
+  // Initial build (debug mode — serve directly from build output)
   println("Building...")
-  let ok = build(dir)
+  let ok = build(dir, dev_mode=true)
   guard ok else {
     println("Error: initial build failed — fix errors and restart")
     return
@@ -21,7 +21,6 @@ pub async fn serve(dir : String, port : Int) -> Unit {
   // Setup file watcher (warren pattern: watch source dir, filter build artifacts)
   let watcher = @afs.Watcher(dir, ignored_paths=fn(path) {
     path.contains(BUILD_DIR_NAME) ||
-    path.contains(config.output) ||
     path.contains(MOONCAKES_DIR) ||
     path.contains(BUILD_OUT_DIR)
   })
@@ -55,7 +54,7 @@ pub async fn serve(dir : String, port : Int) -> Unit {
       watcher.wait_any()
       @async.sleep(100)
       println("Change detected, rebuilding...")
-      let ok = build(dir)
+      let ok = build(dir, dev_mode=true)
       if ok {
         broadcast(subscribers, BroadcastMsg::Reload)
         println("Rebuilt.")
@@ -140,10 +139,30 @@ async fn handle_request(
     return
   }
 
-  // Serve file from dist/ (warren pattern: VFS read)
+  // Serve file from build output (warren pattern: VFS read)
   let mut file_path = "\{dist_dir}\{path}"
+
+  // Handle directory -> index.html
   if @fs.path_exists(file_path) && @fs.is_dir(file_path) {
     file_path = "\{file_path}/\{INDEX_HTML}"
+  }
+
+  // If not found at direct path, try with pages/ prefix (dev mode build output structure)
+  if !@fs.path_exists(file_path) {
+    let pages_path = "\{dist_dir}/pages\{path}"
+    if @fs.path_exists(pages_path) {
+      if @fs.is_dir(pages_path) {
+        file_path = "\{pages_path}/\{INDEX_HTML}"
+      } else {
+        file_path = pages_path
+      }
+    } else if path == "/\{INDEX_HTML}" {
+      // Root request — serve list page at pages/index/index.html
+      let root_index = "\{dist_dir}/pages/index/\{INDEX_HTML}"
+      if @fs.path_exists(root_index) {
+        file_path = root_index
+      }
+    }
   }
 
   let content_type = if file_path.has_suffix(".html") {
