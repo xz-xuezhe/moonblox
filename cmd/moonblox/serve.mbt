@@ -53,14 +53,16 @@ pub async fn serve(dir : String, port : Int) -> Unit {
     // Warren pattern: build first, then wait
     while true {
       watcher.wait_any()
+      @async.sleep(100)
       println("Change detected, rebuilding...")
       let ok = build(dir)
       if ok {
         broadcast(subscribers, BroadcastMsg::Reload)
+        println("Rebuilt.")
       } else {
+        println("Build failed.")
         broadcast(subscribers, BroadcastMsg::BuildFailed(""))
       }
-      println("Rebuilt.")
     }
   })
 }
@@ -120,7 +122,7 @@ async fn handle_request(
           match msg {
             Building => ws.send_text("building") catch { _ => break }
             Reload => ws.send_text("reload") catch { _ => break }
-            BuildFailed(_) => ()
+            BuildFailed(_) => ws.send_text("buildfailed") catch { _ => break }
           }
         }
       })
