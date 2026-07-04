@@ -962,6 +962,20 @@ fn add_structured_cells_to_registry(
 }
 
 ///|
+/// Strip non-digit characters from a date string for numeric comparison.
+/// E.g., "2024-01-15" -> "20240115", "Jan 2024" -> "2024"
+fn date_to_sortable(d : String) -> String {
+  let result = StringBuilder::new()
+  for i = 0; i < d.length(); i = i + 1 {
+    match d.get_char(i) {
+      Some(c) if c >= '0' && c <= '9' => result.write_char(c)
+      _ => ()
+    }
+  }
+  result.to_string()
+}
+
+///|
 /// moonblox build — generate temp project in _moonblox/, compile, assemble dist/
 pub async fn build(dir : String) -> Bool {
   guard @fs.path_exists(dir) else {
@@ -1065,6 +1079,30 @@ pub async fn build(dir : String) -> Bool {
     }
   }
 
+  // Sort posts by date descending for list page
+  posts.sort_by(fn(a, b) {
+    let da = date_to_sortable(a.date)
+    let db = date_to_sortable(b.date)
+    if da > db {
+      -1
+    } else if da < db {
+      1
+    } else {
+      0
+    }
+  })
+
+  // Generate list page through the render pipeline
+  let list_slug = "index"
+  let list_page_dir = "\{build_dir}/\{PAGES_DIR}/\{list_slug}"
+  try! @fs.create_dir(list_page_dir)
+  generate_page_moon_pkg(build_dir, list_slug)
+  @fs.write_string_to_file(
+    "\{list_page_dir}/\{MAIN_MBT}",
+    generate_main_mbt(generate_list_page(posts)),
+  )
+  println("Generated: pages/\{list_slug}/")
+
   // Add composite cell entries to registry
   if all_generated_comps.length() > 0 {
     let reg_path = "\{build_dir}/\{REGISTRY_FILE}"
@@ -1120,35 +1158,20 @@ pub async fn build(dir : String) -> Bool {
     @fs.write_string_to_file("\{page_dist}/\{INDEX_HTML}", html)
   }
 
-  ///|
-  /// Strip non-digit characters from a date string for numeric comparison.
-  /// E.g., "2024-01-15" -> "20240115", "Jan 2024" -> "2024"
-  fn date_to_sortable(d : String) -> String {
-    let result = StringBuilder::new()
-    for i = 0; i < d.length(); i = i + 1 {
-      match d.get_char(i) {
-        Some(c) if c >= '0' && c <= '9' => result.write_char(c)
-        _ => ()
-      }
-    }
-    result.to_string()
+  // Handle list page (slug "index") — copy JS and write HTML to dist root
+  let list_js_src = "\{js_dir}/\{PAGES_DIR}/index/index.js"
+  if @fs.path_exists(list_js_src) {
+    @fs.write_string_to_file(
+      "\{dist_dir}/index.js",
+      @fs.read_file_to_string(list_js_src),
+    )
+    println("Copied: index.js -> dist/")
   }
-
-  // Sort posts by date descending for list page
-  posts.sort_by(fn(a, b) {
-    let da = date_to_sortable(a.date)
-    let db = date_to_sortable(b.date)
-    if da > db {
-      -1
-    } else if da < db {
-      1
-    } else {
-      0
-    }
-  })
-
-  // Generate list page (static HTML)
-  generate_list_html(posts, dist_dir)
+  let list_html = fill_template(page_shell, "Articles", "index", "").replace_all(
+    old="../style.css",
+    new="style.css",
+  )
+  @fs.write_string_to_file("\{dist_dir}/\{INDEX_HTML}", list_html)
 
   if css != "" {
     @fs.write_string_to_file("\{dist_dir}/\{STYLE_CSS}", css) catch {
@@ -1796,47 +1819,21 @@ fn slug_from_filename(filename : String) -> String {
 }
 
 ///|
-/// Generate static HTML list page from post metadata
-fn generate_list_html(posts : Array[PostMeta], dist_dir : String) -> Unit raise {
+/// Generate markdown for the article list page
+fn generate_list_page(posts : Array[PostMeta]) -> String {
   let sb = StringBuilder::new()
-  sb.write_string("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n")
-  sb.write_string("  <meta charset=\"UTF-8\">\n")
-  sb.write_string(
-    "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n",
-  )
-  sb.write_string("  <title>Blog</title>\n")
-  sb.write_string("  <link rel=\"stylesheet\" href=\"style.css\">\n")
-  sb.write_string("</head>\n<body>\n")
-  sb.write_string("  <main class=\"article-list\">\n")
-  sb.write_string("    <h1>Blog</h1>\n")
-
+  sb.write_string("---\ntitle: Articles\n---\n\n# Articles\n\n")
   for i = 0; i < posts.length(); i = i + 1 {
-    sb.write_string("    <article class=\"article-card\">\n")
-    sb.write_string(
-      "      <h2><a href=\"\{posts[i].slug}/\">\{posts[i].title}</a></h2>\n",
-    )
-    if posts[i].date != "" {
+    let p = posts[i]
+    if p.date != "" {
       sb.write_string(
-        "      <time class=\"article-date\">\{posts[i].date}</time>\n",
+        "- **[" + p.title + "](./" + p.slug + ")** — " + p.date + "\n",
       )
+    } else {
+      sb.write_string("- **[" + p.title + "](./" + p.slug + ")**\n")
     }
-    if posts[i].tags != "" {
-      sb.write_string("      <div class=\"article-tags\">")
-      for tag in posts[i].tags.split(",") {
-        let t = tag.trim().to_owned()
-        if t != "" {
-          sb.write_string("<span class=\"article-tag\">\{t}</span>")
-        }
-      }
-      sb.write_string("</div>\n")
-    }
-    sb.write_string("    </article>\n")
   }
-
-  sb.write_string("  </main>\n")
-  sb.write_string("</body>\n</html>\n")
-  @fs.write_string_to_file("\{dist_dir}/\{INDEX_HTML}", sb.to_string())
-  println("Generated: list page (\{posts.length()} articles)")
+  sb.to_string()
 }
 
 // --- Template helpers ---
