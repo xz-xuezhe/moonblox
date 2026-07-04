@@ -154,3 +154,83 @@ test "parse_markdown: structured block multiline" {
     _ => assert_eq("expected ContainerComponent", "")
   }
 }
+
+///|
+test "parse_markdown: table basic" {
+  let doc = parse_markdown("| A | B |\n|---|---|\n| 1 | 2 |")
+  assert_eq(doc.children.length(), 1)
+  match doc.children[0] {
+    @ast.Block::Table(t) => {
+      assert_eq(t.header.length(), 2)
+      assert_eq(t.rows.length(), 1)
+      assert_eq(t.rows[0].length(), 2)
+    }
+    _ => assert_eq("expected Table", "")
+  }
+}
+
+///|
+test "parse_markdown: table with alignment" {
+  let doc = parse_markdown(
+    "| Left | Center | Right |\n|:---|:---:|---:|\n| a | b | c |",
+  )
+  assert_eq(doc.children.length(), 1)
+  match doc.children[0] {
+    @ast.Block::Table(t) => assert_eq(t.alignments.length(), 3)
+    _ => assert_eq("expected Table", "")
+  }
+}
+
+///|
+test "parse_markdown: structured block inline" {
+  let doc = parse_markdown("::section { count: 0 } @counter(value=count) ::")
+  assert_eq(doc.children.length(), 1)
+  match doc.children[0] {
+    @ast.Block::ContainerComponent(cc) => {
+      assert_eq(cc.name, "section")
+      // Check that args contains the model variable
+      match cc.args.get("count") {
+        Some(_) => () // Value was parsed
+        None => assert_eq("expected count in args", "")
+      }
+    }
+    _ => assert_eq("expected ContainerComponent", "")
+  }
+}
+
+///|
+test "parse_markdown: structured block multiline supp" {
+  let doc = parse_markdown("::wrapper { value: 5 }\n@counter(value=value)\n::")
+  assert_eq(doc.children.length(), 1)
+  match doc.children[0] {
+    @ast.Block::ContainerComponent(cc) => assert_eq(cc.name, "wrapper")
+    _ => assert_eq("expected ContainerComponent", "")
+  }
+}
+
+///|
+test "parse_markdown: footnote definition rendered" {
+  let doc = parse_markdown("text[^1]\n\n[^1]: footnote content")
+  // Footnote definition should be converted to a visible paragraph, not dropped
+  assert_eq(doc.children.length() >= 2, true)
+}
+
+///|
+test "parse_markdown: footnote reference preserved" {
+  // The inline footnote reference [^1] should not be dropped
+  let doc = parse_markdown("text[^1]")
+  assert_eq(doc.children.length(), 1)
+}
+
+///|
+test "parse_markdown: raw html preserved" {
+  let doc = parse_markdown("<div>hello</div>")
+  // Raw HTML should be preserved as a paragraph, not dropped
+  assert_eq(doc.children.length() >= 1, true)
+}
+
+///|
+test "parse_markdown: html with attributes" {
+  let doc = parse_markdown("<span class=\"foo\">text</span>")
+  assert_eq(doc.children.length() >= 1, true)
+}
