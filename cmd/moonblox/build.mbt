@@ -1032,12 +1032,17 @@ fn parse_component_args(
 }
 
 ///|
-/// Check if a component source file has any callback parameters.
+fn is_callback_type(type_str : String) -> Bool {
+  type_str.contains("-> @cmd.Cmd") || type_str.contains("-> @rabbita.Cmd")
+}
+
+///|
+/// Check if a component source file has any command-producing callback parameters.
 fn component_has_callback(comp_name : String, build_dir : String) -> Bool {
   let comp_mbt = "\{build_dir}/\{COMPONENTS_DIR}/\{comp_name}/\{comp_name}.mbt"
   guard @fs.path_exists(comp_mbt) else { return false }
   let content = @fs.read_file_to_string(comp_mbt) catch { _ => return false }
-  content.contains("-> Unit")
+  is_callback_type(content)
 }
 
 ///|
@@ -1220,7 +1225,7 @@ fn generate_composite_cell(
                 match msg_var {
                   Some(msg_name) => {
                     sb.write_string(
-                      "          on_change=fn(v) { let _ = emit(" +
+                      "          on_change=fn(v) { emit(" +
                       msg_name +
                       "(v)) },\n",
                     )
@@ -1841,8 +1846,8 @@ fn scan_components(dir : String, out_dir : String) -> Unit raise {
             let is_container = content.contains(
               "children : Array[@rabbita.Html]",
             )
-            // Detect interactive: check for "-> Unit" in the source (callback parameter)
-            let has_callback = content.contains("-> Unit")
+            // Detect interactive: callback parameters must produce event Cmds.
+            let has_callback = is_callback_type(content)
 
             if is_container {
               container_s.push(comp_name)
@@ -2073,8 +2078,8 @@ fn write_props_v2(
     let p = raw_params[i]
     if p != "" {
       let (name, type_str, default_str) = parse_param_decl(p)
-      // Skip callback params (type contains -> Unit)
-      if type_str.contains("-> Unit") {
+      // Skip callback params: they are wired by the generated cell wrapper.
+      if is_callback_type(type_str) {
         continue
       }
       // Skip container children param
@@ -2108,15 +2113,12 @@ fn write_props_v2(
     }
   }
   sb.write_string(") -> " + props_name + " {\n")
-  sb.write_string("  { ")
+  sb.write_string("  " + props_name + "::{\n")
   for i = 0; i < prop_params.length(); i = i + 1 {
     let (name, _, _) = prop_params[i]
-    sb.write_string(name)
-    if i < prop_params.length() - 1 {
-      sb.write_string(", ")
-    }
+    sb.write_string("    " + name + ",\n")
   }
-  sb.write_string(" }\n}\n\n")
+  sb.write_string("  }\n}\n\n")
 
   // Generate _props adapter function
   sb.write_string(
@@ -2158,7 +2160,7 @@ fn write_props_v2(
   if has_callback {
     // Interactive component — wrap in simple_cell
     let msg_name = capitalize(comp_name) + "Msg"
-    sb.write_string("enum " + msg_name + " {\n")
+    sb.write_string("priv enum " + msg_name + " {\n")
     // Generate a simple SetValue-like message for each Double prop
     let has_value_prop = prop_params.length() > 0
     if has_value_prop {
@@ -2181,15 +2183,26 @@ fn write_props_v2(
     sb.write_string("  @rabbita.simple_cell(\n")
     sb.write_string("    model=props,\n")
     // Build update function: match on each message variant
-    sb.write_string("    update=fn(msg, model) {\n")
+    let model_arg = if prop_params.length() > 1 { "model" } else { "_model" }
+    sb.write_string("    update=fn(msg, " + model_arg + ") {\n")
     sb.write_string("      match msg {\n")
     if has_value_prop {
       for i = 0; i < prop_params.length(); i = i + 1 {
         let (name, type_str, _) = prop_params[i]
         if type_str == "Double" {
-          sb.write_string(
-            "        Set" + capitalize(name) + "(n) => { " + name + ": n }\n",
-          )
+          sb.write_string("        Set" + capitalize(name) + "(n) => ")
+          sb.write_string(props_name + "::{\n")
+          for j = 0; j < prop_params.length(); j = j + 1 {
+            let (field_name, _, _) = prop_params[j]
+            if field_name == name {
+              sb.write_string("          " + field_name + ": n,\n")
+            } else {
+              sb.write_string(
+                "          " + field_name + ": model." + field_name + ",\n",
+              )
+            }
+          }
+          sb.write_string("        }\n")
         }
       }
     }
@@ -2212,12 +2225,10 @@ fn write_props_v2(
         break
       }
     }
-    // Pass callback: on_change=fn(v) { let _ = emit(SetValue(v)) }
+    // Pass callback: on_change=fn(v) { emit(SetValue(v)) }
     if has_callback && cb_val != "" {
       sb.write_string(
-        "        on_change=fn(v) { let _ = emit(Set" +
-        capitalize(cb_val) +
-        "(v)) },\n",
+        "        on_change=fn(v) { emit(Set" + capitalize(cb_val) + "(v)) },\n",
       )
     }
     sb.write_string("      )\n")

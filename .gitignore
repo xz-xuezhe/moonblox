@@ -19,6 +19,9 @@ cmd/moonblox/live_reload_script.mbt
 cmd/moonblox/page_shell.mbt
 cmd/moonblox/sample_post_md.mbt
 
+# Test artifacts
+.playwright-cli/
+
 # AI coding
 .agents/
 .claude/

@@ -23,6 +23,13 @@ test "is_name_char: edge cases" {
 }
 
 ///|
+test "is_callback_type: command callbacks" {
+  assert_eq(is_callback_type("(Double) -> @cmd.Cmd"), true)
+  assert_eq(is_callback_type("(Double) -> @rabbita.Cmd"), true)
+  assert_eq(is_callback_type("(Double) -> Unit"), false)
+}
+
+///|
 test "has_removed_cache_entry: detects missing old key" {
   let old_entries : Map[String, Int] = Map([
     ("posts/a.md", 1),
@@ -381,7 +388,7 @@ test "generate_composite_cell: with callback on referenced component" {
   let result = generate_composite_cell("panel", vars, body, callbacks)
   assert_eq(result.contains("simple_cell"), true)
   assert_eq(result.contains("model.count"), true)
-  assert_eq(result.contains("on_change"), true)
+  assert_eq(result.contains("on_change=fn(v) { emit(SetCount(v)) }"), true)
   assert_eq(result.contains("SetCount"), true)
 }
 
