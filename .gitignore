@@ -9,7 +9,6 @@ _build/
 *.mbti
 
 # Generated
-parser/parser.mbt
 parser/parser.mbt.map.json
 cmd/moonblox/*_css.mbt
 cmd/moonblox/*_mbt.mbt
