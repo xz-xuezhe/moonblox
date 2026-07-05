@@ -41,8 +41,3 @@ Thumbs.db
 # Env
 .env
 .env.local
-
-# Docs site build artifacts
-docs-site/dist/
-docs-site/_moonblox/
-docs-site/.mooncakes/

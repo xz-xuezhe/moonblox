@@ -11,8 +11,25 @@ async fn main {
       "init": @clap.SubCommand::new(
         args={
           "dir": @clap.Arg::positional(defaults=[""], help="Project directory"),
+          "headless": @clap.Arg::flag(
+            short='H',
+            help="Skip interactive TUI (CI mode)",
+          ),
+          "theme": @clap.Arg::named(
+            short='t',
+            defaults=["blog"],
+            help="Project theme: blog or docs",
+          ),
+          "empty": @clap.Arg::flag(
+            short='E',
+            help="Skip generating sample content",
+          ),
+          "quiet": @clap.Arg::flag(
+            short='q',
+            help="Suppress non-essential output",
+          ),
         },
-        help="Scaffold a new MoonBlox project",
+        help="Scaffold a new MoonBlox project (pass --headless for CI)",
       ),
       "build": @clap.SubCommand::new(
         args={
@@ -58,19 +75,40 @@ async fn main {
           } else {
             ""
           }
-          let default_dir = if dir == "" || dir == "." { "" } else { dir }
-          match init_tui(default_dir~) {
-            Some(name) => {
-              println("Created MoonBlox site at \{name}/")
-              println("  cd \{name} && moonblox-cli serve")
+          let headless = cmd.get_flag("headless") == Some(true)
+          let theme = cmd.get_one("theme") catch { _ => "blog" }
+          let empty = cmd.get_flag("empty") == Some(true)
+          let quiet = cmd.get_flag("quiet") == Some(true)
+
+          if headless {
+            if dir == "" || dir == "." {
+              println(
+                "Error: --headless requires a project directory. Use: moonblox-cli init <dir> --headless",
+              )
+            } else {
+              scaffold(dir, theme~, components=[], empty~, quiet~)
             }
-            None =>
-              // TUI failed (non-TTY or error) — fall back to direct scaffold if dir provided
-              if dir != "" && dir != "." {
-                scaffold(dir, theme="blog")
-                println("Created MoonBlox site at \{dir}/")
-                println("  cd \{dir} && moonblox-cli serve")
+          } else {
+            let default_dir = if dir == "" || dir == "." { "" } else { dir }
+            match init_tui(default_dir~) {
+              Some(name) => {
+                println("Created MoonBlox site at \{name}/")
+                println("  cd \{name} && moonblox-cli serve")
               }
+              None =>
+                // TUI failed (non-TTY or error) — fall back to direct scaffold if dir provided
+                if dir != "" && dir != "." {
+                  scaffold(
+                    dir,
+                    theme="blog",
+                    components=[],
+                    empty=false,
+                    quiet=false,
+                  )
+                  println("Created MoonBlox site at \{dir}/")
+                  println("  cd \{dir} && moonblox-cli serve")
+                }
+            }
           }
         }
         "build" => {

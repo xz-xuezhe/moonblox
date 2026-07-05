@@ -32,7 +32,7 @@ options(
     "_build",
     "cmd",
     "dist",
-    "docs-site",
+    "docs",
     "openspec",
     "tests",
   ],

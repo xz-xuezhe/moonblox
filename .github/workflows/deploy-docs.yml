@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'docs-site/**'
+      - 'docs/**'
       - 'cmd/moonblox/**'
       - 'theme/**'
       - 'ast/**'
@@ -49,10 +49,19 @@ jobs:
       - name: Build MoonBlox CLI
         run: moon build --target native
 
-      - name: Build Docs Site
+      - name: Scaffold docs site (headless)
         run: |
           MOONBLOX_PATH="$GITHUB_WORKSPACE" \
-          _build/native/debug/build/xz-xuezhe/moonblox-cli/moonblox-cli.exe build docs-site
+          _build/native/debug/build/xz-xuezhe/moonblox-cli/moonblox-cli.exe init _docs_site --headless --theme docs --empty --quiet
+
+      - name: Copy docs content
+        run: |
+          cp -R docs/. _docs_site/docs/
+
+      - name: Build docs site
+        run: |
+          MOONBLOX_PATH="$GITHUB_WORKSPACE" \
+          _build/native/debug/build/xz-xuezhe/moonblox-cli/moonblox-cli.exe build _docs_site
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -60,7 +69,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs-site/dist
+          path: _docs_site/dist
 
   deploy:
     environment:

@@ -5,13 +5,14 @@ pub fn scaffold(
   theme? : String = "blog",
   components? : Array[String] = [],
   quiet? : Bool = false,
+  empty? : Bool = false,
 ) -> Unit {
   let comps = if components.length() == 0 {
     all_component_names()
   } else {
     components
   }
-  do_scaffold(dir, theme, comps, quiet) catch {
+  do_scaffold(dir, theme, comps, quiet, empty) catch {
     err => println("Error: \{err}")
   }
 }
@@ -72,6 +73,7 @@ fn do_scaffold(
   theme : String,
   components : Array[String],
   quiet : Bool,
+  empty : Bool,
 ) -> Unit raise {
   let docs_config =
     #|{
@@ -95,7 +97,9 @@ fn do_scaffold(
   write(dir, "moonblox.json", config_json, quiet)
   let date = today()
   let post = sample_post_md.replace(old="__DATE__", new=date)
-  write(dir, "\{content_dir}/hello.md", post, quiet)
+  if !empty {
+    write(dir, "\{content_dir}/hello.md", post, quiet)
+  }
   write(dir, "\{THEME_DIR}/base.css", base_css, quiet)
 
   for i = 0; i < components.length(); i = i + 1 {
