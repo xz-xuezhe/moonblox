@@ -147,7 +147,13 @@ impl Theme for DocsTheme with generate_nav_html(
   for i = 0; i < pages.length(); i = i + 1 {
     let page = pages[i]
     let title = page.metadata.get("title").unwrap_or(page.slug)
-    let url = "./" + page.slug + "/"
+    // Determine link prefix: listing page is at root, content pages are one level deep
+    let prefix = if current_slug == "_listing" { "" } else { "../" }
+    let url = if page.slug == "index" {
+      if current_slug == "_listing" { "./" } else { "../" }
+    } else {
+      prefix + page.slug + "/"
+    }
     let active = if page.slug == current_slug { " class=\"active\"" } else { "" }
     sb.write_string("      <a href=\"" + url + "\"" + active + ">" + title + "</a>\n")
   }
@@ -170,7 +176,7 @@ impl Theme for DocsTheme with fn page_shell_template(self) -> String {
     #|<body>
     #|  <div class="docs-layout">
     #|    <aside class="docs-sidebar">
-    #|      <nav id="sidebar-nav">
+    #|      <nav class="sidebar-nav">
     #|        __NAV__
     #|      </nav>
     #|    </aside>
@@ -274,7 +280,7 @@ impl Theme for DocsTheme with fn build_meta_tags(self, page : PageEntry) -> Stri
   let description = page.metadata.get("description").unwrap_or("")
   if description != "" {
     sb.write_string(
-      "  <meta name=\"description\" content=\"\{description}\">\n",
+      "  <meta name=\"description\" content=\"" + html_escape(description) + "\">\n",
     )
   }
   sb.to_string()

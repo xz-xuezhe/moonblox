@@ -64,7 +64,14 @@ async fn main {
               println("Created MoonBlox site at \{name}/")
               println("  cd \{name} && moonblox serve")
             }
-            None => ()
+            None => {
+              // TUI failed (non-TTY or error) — fall back to direct scaffold if dir provided
+              if dir != "" && dir != "." {
+                scaffold(dir, theme="blog")
+                println("Created MoonBlox site at \{dir}/")
+                println("  cd \{dir} && moonblox serve")
+              }
+            }
           }
         }
         "build" => {

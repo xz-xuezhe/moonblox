@@ -2269,6 +2269,24 @@ fn capitalize(s : String) -> String {
 // --- Template helpers ---
 
 ///|
+/// Escape HTML special characters to prevent XSS in attribute values.
+fn html_escape(s : String) -> String {
+  let sb = StringBuilder::new()
+  for i = 0; i < s.length(); i = i + 1 {
+    match s.get_char(i) {
+      Some('&') => sb.write_string("&amp;")
+      Some('"') => sb.write_string("&quot;")
+      Some('<') => sb.write_string("&lt;")
+      Some('>') => sb.write_string("&gt;")
+      Some('\'') => sb.write_string("&#39;")
+      Some(c) => sb.write_char(c)
+      None => ()
+    }
+  }
+  sb.to_string()
+}
+
+///|
 /// Simple placeholder replacement: __TITLE__, __SLUG__, __META_TAGS__, __NAV__
 fn fill_template(
   template : String,
@@ -2278,7 +2296,7 @@ fn fill_template(
   nav_html : String,
 ) -> String {
   template
-  .replace_all(old="__TITLE__", new=title)
+  .replace_all(old="__TITLE__", new=html_escape(title))
   .replace_all(old="__SLUG__", new=slug)
   .replace_all(old="__META_TAGS__", new=meta_tags)
   .replace_all(old="__NAV__", new=nav_html)

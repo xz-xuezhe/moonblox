@@ -74,6 +74,24 @@ pub(open) trait Theme {
 }
 
 ///|
+/// Escape HTML special characters to prevent XSS in attribute values.
+pub fn html_escape(s : String) -> String {
+  let sb = StringBuilder::new()
+  for i = 0; i < s.length(); i = i + 1 {
+    match s.get_char(i) {
+      Some('&') => sb.write_string("&amp;")
+      Some('"') => sb.write_string("&quot;")
+      Some('<') => sb.write_string("&lt;")
+      Some('>') => sb.write_string("&gt;")
+      Some('\'') => sb.write_string("&#39;")
+      Some(c) => sb.write_char(c)
+      None => ()
+    }
+  }
+  sb.to_string()
+}
+
+///|
 /// Extract slug from a markdown filename (strip .md suffix).
 pub fn slug_from_filename(filename : String) -> String {
   if filename.has_suffix(".md") {

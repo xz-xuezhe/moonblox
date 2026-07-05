@@ -226,11 +226,11 @@ impl Theme for BlogTheme with fn build_meta_tags(self, page : PageEntry) -> Stri
   let sb = StringBuilder::new()
   let date = page.metadata.get("date").unwrap_or("")
   if date != "" {
-    sb.write_string("  <meta name=\"date\" content=\"\{date}\">\n")
+    sb.write_string("  <meta name=\"date\" content=\"" + html_escape(date) + "\">\n")
   }
   let tags = page.metadata.get("tags").unwrap_or("")
   if tags != "" {
-    sb.write_string("  <meta name=\"keywords\" content=\"\{tags}\">\n")
+    sb.write_string("  <meta name=\"keywords\" content=\"" + html_escape(tags) + "\">\n")
   }
   sb.to_string()
 }

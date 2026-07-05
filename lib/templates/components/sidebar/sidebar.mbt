@@ -6,5 +6,5 @@ pub fn sidebar() -> @rabbita.Html {
   let children : Array[@rabbita.Html] = []
   // Navigation is injected as a JSON script tag by the build engine.
   // The sidebar reads it at runtime and builds the navigation tree.
-  @html.nav(class="sidebar-nav", id="sidebar-nav", children)
+  @html.nav(class="sidebar-nav", children)
 }
