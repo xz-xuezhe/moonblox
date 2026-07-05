@@ -64,6 +64,11 @@ pub(open) trait Theme {
   /// Each dir should contain moon.pkg, *.mbt, and optional *.css.
   fn component_dirs(Self) -> Array[String]
 
+  /// Generate HTML for sidebar/breadcrumb navigation.
+  /// `current_slug` identifies the active page (for highlighting).
+  /// Return empty string if the theme has no navigation.
+  generate_nav_html(Self, pages : Array[PageEntry], current_slug : String) -> String
+
   /// Generate HTML meta tags from page metadata (e.g., date, keywords, description).
   fn build_meta_tags(Self, page : PageEntry) -> String
 }

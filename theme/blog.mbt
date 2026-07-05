@@ -152,6 +152,16 @@ impl Theme for BlogTheme with fn generate_listing_markdown(
 }
 
 ///|
+impl Theme for BlogTheme with generate_nav_html(
+  self,
+  _pages : Array[PageEntry],
+  _current_slug : String,
+) -> String {
+  // Blog theme has no sidebar navigation
+  ""
+}
+
+///|
 impl Theme for BlogTheme with fn page_shell_template(self) -> String {
   (
     #|<!DOCTYPE html>

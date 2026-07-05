@@ -80,6 +80,18 @@ pub fn theme_generate_listing_markdown(
 }
 
 ///|
+pub fn theme_generate_nav_html(
+  theme : ThemeKind,
+  pages : Array[PageEntry],
+  current_slug : String,
+) -> String {
+  match theme {
+    Blog(t) => Theme::generate_nav_html(t, pages, current_slug)
+    Docs(t) => Theme::generate_nav_html(t, pages, current_slug)
+  }
+}
+
+///|
 pub fn theme_page_shell_template(theme : ThemeKind) -> String {
   match theme {
     Blog(t) => t.page_shell_template()

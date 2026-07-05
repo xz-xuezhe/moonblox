@@ -137,6 +137,24 @@ impl Theme for DocsTheme with fn generate_listing_markdown(
 }
 
 ///|
+impl Theme for DocsTheme with generate_nav_html(
+  self,
+  pages : Array[PageEntry],
+  current_slug : String,
+) -> String {
+  // Generate sidebar navigation HTML from sorted pages
+  let sb = StringBuilder::new()
+  for i = 0; i < pages.length(); i = i + 1 {
+    let page = pages[i]
+    let title = page.metadata.get("title").unwrap_or(page.slug)
+    let url = "./" + page.slug + "/"
+    let active = if page.slug == current_slug { " class=\"active\"" } else { "" }
+    sb.write_string("      <a href=\"" + url + "\"" + active + ">" + title + "</a>\n")
+  }
+  sb.to_string()
+}
+
+///|
 impl Theme for DocsTheme with fn page_shell_template(self) -> String {
   (
     #|<!DOCTYPE html>
@@ -152,7 +170,9 @@ impl Theme for DocsTheme with fn page_shell_template(self) -> String {
     #|<body>
     #|  <div class="docs-layout">
     #|    <aside class="docs-sidebar">
-    #|      <nav id="sidebar-nav"></nav>
+    #|      <nav id="sidebar-nav">
+    #|        __NAV__
+    #|      </nav>
     #|    </aside>
     #|    <main class="docs-content">
     #|      <div id="app"></div>

@@ -1510,11 +1510,13 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
       let title = pages[i].metadata.get("title").unwrap_or(slug)
       let page_dir = "\{pages_dir}/\{slug}"
       try! ensure_dir(page_dir)
+      let nav_html = @theme.theme_generate_nav_html(theme_kind, pages, slug)
       let html = fill_template(
         page_shell,
         title,
         slug,
         @theme.theme_build_meta_tags(theme_kind, pages[i]),
+        nav_html,
       ).replace_all(old="../style.css", new="../../style.css")
       @fs.write_string_to_file("\{page_dir}/\{INDEX_HTML}", html)
     }
@@ -1522,11 +1524,13 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
     // Write list page HTML
     let list_page_dir = "\{pages_dir}/_listing"
     try! ensure_dir(list_page_dir)
+    let list_nav_html = @theme.theme_generate_nav_html(theme_kind, pages, "_listing")
     let list_html = fill_template(
       page_shell,
       @theme.theme_listing_page_title(theme_kind),
       "index",
       "",
+      list_nav_html,
     ).replace_all(old="../style.css", new="../../style.css")
     @fs.write_string_to_file("\{list_page_dir}/\{INDEX_HTML}", list_html)
 
@@ -1573,11 +1577,13 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
         println("Copied: \{slug}.js -> dist/\{slug}/")
       }
       // Write page HTML shell with metadata
+      let nav_html = @theme.theme_generate_nav_html(theme_kind, pages, slug)
       let html = fill_template(
         page_shell,
         title,
         slug,
         @theme.theme_build_meta_tags(theme_kind, pages[i]),
+        nav_html,
       )
       @fs.write_string_to_file("\{page_dist}/\{INDEX_HTML}", html)
     }
@@ -1591,11 +1597,13 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
       )
       println("Copied: index.js -> dist/")
     }
+    let list_nav_html = @theme.theme_generate_nav_html(theme_kind, pages, "_listing")
     let list_html = fill_template(
       page_shell,
       @theme.theme_listing_page_title(theme_kind),
       "index",
       "",
+      list_nav_html,
     ).replace_all(old="../style.css", new="style.css")
     @fs.write_string_to_file("\{dist_dir}/\{INDEX_HTML}", list_html)
 
@@ -2261,17 +2269,19 @@ fn capitalize(s : String) -> String {
 // --- Template helpers ---
 
 ///|
-/// Simple placeholder replacement: __TITLE__, __SLUG__, __META_TAGS__
+/// Simple placeholder replacement: __TITLE__, __SLUG__, __META_TAGS__, __NAV__
 fn fill_template(
   template : String,
   title : String,
   slug : String,
   meta_tags : String,
+  nav_html : String,
 ) -> String {
   template
   .replace_all(old="__TITLE__", new=title)
   .replace_all(old="__SLUG__", new=slug)
   .replace_all(old="__META_TAGS__", new=meta_tags)
+  .replace_all(old="__NAV__", new=nav_html)
 }
 
 // --- Code generation ---
