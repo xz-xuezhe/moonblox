@@ -122,6 +122,362 @@ fn read_config(dir : String) -> SiteConfig {
   }
 }
 
+// --- Incremental Build Support ---
+
+///|
+/// Content hash for change detection (sum of char values + length).
+fn hash_content(content : String) -> Int {
+  let mut sum = 0
+  for i = 0; i < content.length(); i = i + 1 {
+    match content.get_char(i) {
+      Some(c) => sum = sum + c.to_int()
+      None => ()
+    }
+  }
+  sum + content.length()
+}
+
+///|
+struct BuildCache {
+  post_mtimes : Map[String, Int]
+  component_mtimes : Map[String, Int]
+  theme_mtime : Int
+  config_mtime : Int
+}
+
+///|
+fn BuildCache::new() -> BuildCache {
+  {
+    post_mtimes: Map([]),
+    component_mtimes: Map([]),
+    theme_mtime: 0,
+    config_mtime: 0,
+  }
+}
+
+///|
+enum ChangeType {
+  NoChanges
+  PostsChanged(Array[String])
+  ComponentsChanged(Array[String])
+  ThemeChanged
+  ConfigChanged
+  FullRebuild
+}
+
+///|
+/// Compare current file state with cache and return what changed.
+fn detect_changes(
+  dir : String,
+  cache : Ref[BuildCache],
+  config : SiteConfig,
+) -> ChangeType {
+  let old = cache.val
+
+  // Check config
+  let config_path = "\{dir}/moonblox.json"
+  let config_h = if @fs.path_exists(config_path) {
+    hash_content(@fs.read_file_to_string(config_path) catch { _ => "" })
+  } else {
+    0
+  }
+
+  // Check theme
+  let theme_path = "\{dir}/\{THEME_DIR}/base.css"
+  let theme_h = if @fs.path_exists(theme_path) {
+    hash_content(@fs.read_file_to_string(theme_path) catch { _ => "" })
+  } else {
+    0
+  }
+
+  // Check components
+  let comp_dir = "\{dir}/\{config.components}"
+  let comp_hashes : Map[String, Int] = Map([])
+  let changed_comps : Array[String] = []
+  if @fs.path_exists(comp_dir) {
+    let subdirs = @fs.read_dir(comp_dir) catch {
+      _ => return ChangeType::FullRebuild
+    }
+    for i = 0; i < subdirs.length(); i = i + 1 {
+      let name = subdirs[i]
+      let mbt_path = "\{comp_dir}/\{name}/\{name}.mbt"
+      let css_path = "\{comp_dir}/\{name}/\{name}.css"
+      let pkg_path = "\{comp_dir}/\{name}/moon.pkg"
+      let mut h = 0
+      if @fs.path_exists(mbt_path) {
+        h = h +
+          hash_content(@fs.read_file_to_string(mbt_path) catch { _ => "" })
+      }
+      if @fs.path_exists(css_path) {
+        h = h +
+          hash_content(@fs.read_file_to_string(css_path) catch { _ => "" })
+      }
+      if @fs.path_exists(pkg_path) {
+        h = h +
+          hash_content(@fs.read_file_to_string(pkg_path) catch { _ => "" })
+      }
+      comp_hashes.set(name, h)
+      match old.component_mtimes.get(name) {
+        Some(old_h) => if h != old_h { changed_comps.push(name) }
+        None => changed_comps.push(name)
+      }
+    }
+  }
+
+  // Check posts
+  let posts_dir = "\{dir}/\{config.input}"
+  let post_hashes : Map[String, Int] = Map([])
+  let changed_posts : Array[String] = []
+  if @fs.path_exists(posts_dir) {
+    let files = @fs.read_dir(posts_dir) catch {
+      _ => return ChangeType::FullRebuild
+    }
+    for i = 0; i < files.length(); i = i + 1 {
+      let fname = files[i]
+      if fname.has_suffix(".md") {
+        let path = "\{posts_dir}/\{fname}"
+        let content = @fs.read_file_to_string(path) catch { _ => "" }
+        let h = if content != "" { hash_content(content) } else { 0 }
+        post_hashes.set(path, h)
+        match old.post_mtimes.get(path) {
+          Some(old_h) =>
+            if h != old_h {
+              changed_posts.push(slug_from_filename(fname))
+            }
+          None => changed_posts.push(slug_from_filename(fname))
+        }
+      }
+    }
+  }
+
+  // Update cache atomically
+  cache.val = {
+    post_mtimes: post_hashes,
+    component_mtimes: comp_hashes,
+    theme_mtime: theme_h,
+    config_mtime: config_h,
+  }
+
+  // Determine change type (priority: config > theme > components+posts > components > posts)
+  if old.config_mtime != config_h {
+    return ChangeType::ConfigChanged
+  }
+  if old.theme_mtime != theme_h {
+    return ChangeType::ThemeChanged
+  }
+  if changed_comps.length() > 0 && changed_posts.length() > 0 {
+    return ChangeType::FullRebuild
+  }
+  if changed_comps.length() > 0 {
+    return ChangeType::ComponentsChanged(changed_comps)
+  }
+  if changed_posts.length() > 0 {
+    return ChangeType::PostsChanged(changed_posts)
+  }
+
+  ChangeType::NoChanges
+}
+
+///|
+/// Collect post metadata from all markdown files in the posts directory.
+fn collect_post_meta(
+  posts_dir : String,
+  _config : SiteConfig,
+) -> Array[PostMeta] {
+  let posts : Array[PostMeta] = []
+  if @fs.path_exists(posts_dir) {
+    let files = @fs.read_dir(posts_dir) catch { _ => return posts }
+    for i = 0; i < files.length(); i = i + 1 {
+      let name = files[i]
+      if name.has_suffix(".md") {
+        let content = @fs.read_file_to_string("\{posts_dir}/\{name}") catch {
+          _ => continue
+        }
+        let slug = slug_from_filename(name)
+        let doc = @convert.parse_markdown(content)
+        let meta = doc.meta
+        posts.push(PostMeta::{
+          slug,
+          title: match meta.get("title") {
+            Some(t) => t
+            None => slug
+          },
+          date: match meta.get("date") {
+            Some(d) => d
+            None => ""
+          },
+          tags: match meta.get("tags") {
+            Some(t) => t
+            None => ""
+          },
+        })
+      }
+    }
+  }
+  posts
+}
+
+///|
+/// Perform an incremental rebuild based on detected changes.
+async fn incremental_rebuild(
+  dir : String,
+  build_dir : String,
+  config : SiteConfig,
+  changes : ChangeType,
+  dev_mode? : Bool = false,
+) -> Bool {
+  match changes {
+    NoChanges => {
+      println("No changes detected.")
+      true
+    }
+    PostsChanged(slugs) => {
+      let posts_dir = "\{dir}/\{config.input}"
+      let comp_callbacks = build_callback_map(build_dir)
+      let all_generated_comps : Array[String] = []
+
+      for i = 0; i < slugs.length(); i = i + 1 {
+        let slug = slugs[i]
+        let fname = slug + ".md"
+        let content = @fs.read_file_to_string("\{posts_dir}/\{fname}") catch {
+          _ => {
+            println("Warning: cannot read '\{fname}', skipping")
+            continue
+          }
+        }
+        let (processed_content, generated_comps) = process_structured_blocks(
+          content, build_dir, comp_callbacks,
+        )
+        for comp_name in generated_comps {
+          let mut already_have = false
+          for k = 0; k < all_generated_comps.length(); k = k + 1 {
+            if all_generated_comps[k] == comp_name {
+              already_have = true
+              break
+            }
+          }
+          if !already_have {
+            all_generated_comps.push(comp_name)
+          }
+        }
+        let page_dir = "\{build_dir}/\{PAGES_DIR}/\{slug}"
+        try {
+          ensure_dir(page_dir)
+          generate_page_moon_pkg(build_dir, slug)
+          @fs.write_string_to_file(
+            "\{page_dir}/\{MAIN_MBT}",
+            generate_main_mbt(processed_content),
+          )
+          println("Updated: pages/\{slug}/")
+        } catch {
+          e => {
+            println("Warning: failed to regenerate '\{slug}': \{e}")
+            continue
+          }
+        }
+      }
+
+      // Regenerate list page
+      let posts = collect_post_meta(posts_dir, config)
+      posts.sort_by(fn(a, b) {
+        let da = date_to_sortable(a.date)
+        let db = date_to_sortable(b.date)
+        if da > db {
+          -1
+        } else if da < db {
+          1
+        } else {
+          0
+        }
+      })
+      let list_page_dir = "\{build_dir}/\{PAGES_DIR}/index"
+      try {
+        ensure_dir(list_page_dir)
+        generate_page_moon_pkg(build_dir, "index")
+        @fs.write_string_to_file(
+          "\{list_page_dir}/\{MAIN_MBT}",
+          generate_main_mbt(generate_list_page(posts)),
+        )
+        println("Updated: pages/index/")
+      } catch {
+        e => println("Warning: failed to regenerate list page: \{e}")
+      }
+
+      // Add composite cell entries to registry
+      if all_generated_comps.length() > 0 {
+        let reg_path = "\{build_dir}/\{REGISTRY_FILE}"
+        add_structured_cells_to_registry(reg_path, all_generated_comps) catch {
+          e => println("Warning: failed to update registry: \{e}")
+        }
+      }
+
+      // Run moon build
+      let moon_args = if dev_mode {
+        ["build", "--target", "js"]
+      } else {
+        ["build", "--target", "js", "--release"]
+      }
+      println("Building JS (incremental)...")
+      let result = @process.run("moon", moon_args, cwd=build_dir)
+      guard result == 0 else {
+        println("Error: moon build failed with exit code \{result}")
+        return false
+      }
+      true
+    }
+    ComponentsChanged(names) => {
+      let src_comp_dir = "\{dir}/\{config.components}"
+      let dst_comp_dir = "\{build_dir}/\{COMPONENTS_DIR}"
+      for i = 0; i < names.length(); i = i + 1 {
+        let name = names[i]
+        let src_dir = "\{src_comp_dir}/\{name}"
+        let dst_dir = "\{dst_comp_dir}/\{name}"
+        if @fs.path_exists(src_dir) && @fs.is_dir(src_dir) {
+          try {
+            if !@fs.path_exists(dst_dir) {
+              @fs.create_dir(dst_dir)
+            }
+            for f in @fs.read_dir(src_dir) {
+              let src_file = "\{src_dir}/\{f}"
+              if !@fs.is_dir(src_file) {
+                @fs.write_string_to_file(
+                  "\{dst_dir}/\{f}",
+                  @fs.read_file_to_string(src_file),
+                )
+              }
+            }
+            println("Copied: components/\{name}/")
+          } catch {
+            @fs.IOError(msg) =>
+              println("Warning: failed to copy component '\{name}': \{msg}")
+          }
+        }
+      }
+      // Re-scan all components (regenerates registry + props)
+      scan_components(dst_comp_dir, build_dir) catch {
+        e => {
+          println("Error: failed to scan components: \{e}")
+          return false
+        }
+      }
+      // Run moon build
+      let moon_args = if dev_mode {
+        ["build", "--target", "js"]
+      } else {
+        ["build", "--target", "js", "--release"]
+      }
+      println("Building JS (incremental)...")
+      let result = @process.run("moon", moon_args, cwd=build_dir)
+      guard result == 0 else {
+        println("Error: moon build failed with exit code \{result}")
+        return false
+      }
+      true
+    }
+    ThemeChanged | ConfigChanged | FullRebuild => build(dir, dev_mode~)
+  }
+}
+
 // --- Structured Block Processing ---
 
 ///|

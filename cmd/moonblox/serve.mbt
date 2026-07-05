@@ -49,18 +49,35 @@ pub async fn serve(dir : String, port : Int) -> Unit {
     })
 
     println("Watching for changes...")
+    let config = read_config(dir)
+    let cache = Ref(BuildCache::new())
+    // Prime the cache: snapshot current state so future detections
+    // compare against this baseline rather than empty cache.
+    ignore(detect_changes(dir, cache, config))
     // Warren pattern: build first, then wait
     while true {
       watcher.wait_any()
       @async.sleep(100)
-      println("Change detected, rebuilding...")
-      let ok = build(dir, dev_mode=true)
-      if ok {
-        broadcast(subscribers, BroadcastMsg::Reload)
-        println("Rebuilt.")
-      } else {
-        println("Build failed.")
-        broadcast(subscribers, BroadcastMsg::BuildFailed(""))
+      let changes = detect_changes(dir, cache, config)
+      match changes {
+        NoChanges => continue
+        _ => {
+          println("Change detected, rebuilding...")
+          let ok = incremental_rebuild(
+            dir,
+            build_root,
+            config,
+            changes,
+            dev_mode=true,
+          )
+          if ok {
+            broadcast(subscribers, BroadcastMsg::Reload)
+            println("Rebuilt.")
+          } else {
+            println("Build failed.")
+            broadcast(subscribers, BroadcastMsg::BuildFailed(""))
+          }
+        }
       }
     }
   })
