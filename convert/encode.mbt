@@ -90,6 +90,37 @@ fn collapse_newlines(s : StringView) -> String {
 }
 
 ///|
+/// Find the position after the closing backtick(s) of an inline code span.
+/// Handles both single backtick and double-backtick code spans.
+/// `start` points to the opening backtick.
+/// Returns the position after the closing backtick, or text.length() if unmatched.
+fn skip_code_span(text : String, start : Int) -> Int {
+  // Count opening backticks
+  let mut tick_count = 0
+  let mut pos = start
+  while pos < text.length() && text.get_char(pos) == Some('`') {
+    tick_count = tick_count + 1
+    pos = pos + 1
+  }
+  // Search for matching closing backticks
+  while pos < text.length() {
+    if text.get_char(pos) == Some('`') {
+      let mut found = 0
+      let mut check = pos
+      while check < text.length() && text.get_char(check) == Some('`') && found < tick_count {
+        found = found + 1
+        check = check + 1
+      }
+      if found == tick_count {
+        return check  // position after closing backticks
+      }
+    }
+    pos = pos + 1
+  }
+  text.length()  // unmatched — treat rest as code span
+}
+
+///|
 fn encode_directives(text : String) -> String {
   let len = text.length()
   let sb = StringBuilder::new()
@@ -98,19 +129,37 @@ fn encode_directives(text : String) -> String {
     let at = find_at(text, i)
     match at {
       Some(at_pos) => {
-        sb.write_string(text[i:at_pos].to_owned())
-        let end = directive_end(text, at_pos + 1)
-        match end {
-          Some(end_pos) => {
-            let directive = collapse_newlines(text[at_pos + 1:end_pos])
-            sb.write_string("<!--mm ")
-            sb.write_string(directive)
-            sb.write_string("-->")
-            i = end_pos
+        // Check for an inline code span between i and at_pos
+        let mut backtick_pos = None
+        for j = i; j < at_pos; j = j + 1 {
+          if text.get_char(j) == Some('`') {
+            backtick_pos = Some(j)
+            break
+          }
+        }
+        match backtick_pos {
+          Some(bt_pos) => {
+            // There's a backtick before the @ — skip the code span
+            let end = skip_code_span(text, bt_pos)
+            sb.write_string(text[i:end].to_owned())
+            i = end
           }
           None => {
-            sb.write_char('@')
-            i = at_pos + 1
+            sb.write_string(text[i:at_pos].to_owned())
+            let end = directive_end(text, at_pos + 1)
+            match end {
+              Some(end_pos) => {
+                let directive = collapse_newlines(text[at_pos + 1:end_pos])
+                sb.write_string("<!--mm ")
+                sb.write_string(directive)
+                sb.write_string("-->")
+                i = end_pos
+              }
+              None => {
+                sb.write_char('@')
+                i = at_pos + 1
+              }
+            }
           }
         }
       }

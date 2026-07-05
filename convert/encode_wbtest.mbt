@@ -49,3 +49,26 @@ test "is_name_start: basic" {
   assert_eq(is_name_start('-'), false)
   assert_eq(is_name_start(' '), false)
 }
+
+///|
+test "encode_directives: skip single backtick code span" {
+  assert_eq(encode_directives("use `@name(x: 1)` here"), "use `@name(x: 1)` here")
+}
+
+///|
+test "encode_directives: skip double backtick code span" {
+  assert_eq(encode_directives("use ``@name(x: 1)`` here"), "use ``@name(x: 1)`` here")
+}
+
+///|
+test "encode_directives: directive before and after code span" {
+  assert_eq(
+    encode_directives("@a(x:1) text `@b(y:2)` text @c(z:3)"),
+    "<!--mm a(x:1)--> text `@b(y:2)` text <!--mm c(z:3)-->",
+  )
+}
+
+///|
+test "encode_directives: unmatched backtick treated as code span" {
+  assert_eq(encode_directives("`@a(x:1)"), "`@a(x:1)")
+}
