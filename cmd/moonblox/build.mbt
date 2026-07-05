@@ -2285,10 +2285,10 @@ fn generate_list_page(posts : Array[PostMeta]) -> String {
     let p = posts[i]
     if p.date != "" {
       sb.write_string(
-        "- **[" + p.title + "](./" + p.slug + ")** — " + p.date + "\n",
+        "- **[" + p.title + "](./" + p.slug + "/)** — " + p.date + "\n",
       )
     } else {
-      sb.write_string("- **[" + p.title + "](./" + p.slug + ")**\n")
+      sb.write_string("- **[" + p.title + "](./" + p.slug + "/)**\n")
     }
   }
   sb.to_string()

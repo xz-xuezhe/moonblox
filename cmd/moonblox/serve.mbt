@@ -179,6 +179,13 @@ async fn handle_request(
       if @fs.path_exists(root_index) {
         file_path = root_index
       }
+    } else if path.has_suffix(".js") && !path[1:].contains("/") {
+      // Deep fallback: /{slug}.js → pages/{slug}/{slug}.js
+      let slug = path[1:path.length() - 3]
+      let deep_path = "\{dist_dir}/pages/\{slug}/\{slug}.js"
+      if @fs.path_exists(deep_path) {
+        file_path = deep_path
+      }
     }
   }
 
