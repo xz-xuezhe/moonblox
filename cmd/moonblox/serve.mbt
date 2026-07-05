@@ -58,6 +58,7 @@ pub async fn serve(dir : String, port : Int) -> Unit {
     while true {
       watcher.wait_any()
       @async.sleep(100)
+      let config = read_config(dir)
       let changes = detect_changes(dir, cache, config)
       match changes {
         NoChanges => continue
