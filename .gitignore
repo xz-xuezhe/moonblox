@@ -10,13 +10,6 @@ _build/
 
 # Generated
 parser/parser.mbt.map.json
-cmd/moonblox/*_css.mbt
-cmd/moonblox/*_mbt.mbt
-cmd/moonblox/*_moon_pkg.mbt
-cmd/moonblox/default_config_json.mbt
-cmd/moonblox/live_reload_script.mbt
-cmd/moonblox/page_shell.mbt
-cmd/moonblox/sample_post_md.mbt
 
 # Test artifacts
 .playwright-cli/
