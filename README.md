@@ -11,28 +11,31 @@
 :::callout(type: "note", title: "Tip")
 Your Markdown content here.
 :::
+
+::badge_board { name = "guest", count = 0 }
+  @badge(text=name, tone="info")
+  @counter(value=count)
+::
 ```
 
 ## Features
 
-- **Embed components in Markdown** — `@counter(initial: 0)` inline. Not a shortcode, not a template tag. Just part of your prose.
-- **Composable, not configurable** — write your own components with [rabbita](https://github.com/moonbit-community/rabbita). Static, interactive, container — you decide what they do.
-- **Zero-config build** — `moonblox build` scans your components, compiles to JavaScript, and assembles `dist/` in one command.
+- **Front matter**: YAML metadata (title, date, tags) rendered in page output
+- **Tables**: Markdown table support with alignment
+- **8 built-in components**: badge, counter, callout, card, grid, metric, chart, graph
+- **Configuration**: `moonblox.json` for custom input/output/component paths
+- **Live reload**: `moonblox serve` with file watcher and WebSocket reload
+- **Incremental builds**: Dev server skips unchanged files, uses debug builds
 
 ## Quick Start
 
 Requires [MoonBit](https://www.moonbitlang.com/download/) toolchain.
 
 ```bash
-git clone https://github.com/xz-xuezhe/moonblox
-cd moonblox
-
-# Scaffold a new site
-moon run --target native cmd/moonblox -- init my-site
-
-# Build and open
-MOONBLOX_PATH=. moon run --target native cmd/moonblox -- build my-site
-open my-site/dist/index.html
+moonblox init my-site
+cd my-site
+moonblox serve        # dev server with live reload
+moonblox build        # production build
 ```
 
 ## Project Structure
@@ -40,28 +43,70 @@ open my-site/dist/index.html
 ```
 my-site/
   posts/index.md           # your Markdown content
-  components/
-    badge/                 # @badge(text: "new", tone: "info")
-    counter/               # @counter(initial: 0)
-    callout/               # :::callout ... :::
+  components/        — your components (8 built-in: badge, counter, callout, card, grid, metric, chart, graph)
   theme/base.css           # global styles
   dist/                    # built output
 ```
 
-## Components
+## Component Interface
 
-A component is a directory under `components/<name>/`:
+All components use a unified `pub fn -> @rabbita.Html` interface:
 
-- **`moon.pkg`** — declares `supported_targets = "js+native"`
-- **`<name>.mbt`** — exports `pub fn <name>_cell(args) -> @rabbita.Cell`
-- **`<name>.css`** — optional, component styles
+**Inline component** (badge):
+```moonbit
+pub fn badge(text? : String = "", tone? : String = "default") -> @rabbita.Html {
+  @html.span(class="badge badge--\{tone}", [@html.text(text)])
+}
+```
 
-See the [built-in components](lib/templates/components/) for examples.
+**Interactive component** (counter):
+```moonbit
+pub fn counter(value? : Double = 0.0, on_change? : (Double) -> Unit = fn(_) { () }) -> @rabbita.Html {
+  @html.div(class="counter", [
+    @html.button(on_click=fn() { on_change(value - 1.0) }, [@html.text("-")]),
+    @html.span([@html.text(value.to_string())]),
+    @html.button(on_click=fn() { on_change(value + 1.0) }, [@html.text("+")]),
+  ])
+}
+```
+
+**Container component** (callout):
+```moonbit
+pub fn callout(children : Array[@rabbita.Html], type_? : String = "note", title? : String = "") -> @rabbita.Html {
+  ...
+}
+```
+
+The build system auto-generates `_props.mbt` (type-safe prop extraction) and a `_cell` adapter
+that wires your pure Html function into rabbita's Cell tree. No Props structs or Model/Msg types needed.
+
+### Structured Block Syntax
+
+Use `::name { model } { body }::` to share state between components:
+
+```md
+::dashboard { count = 0, name = "guest" }
+  @counter(value=count)
+  @badge(text=name, tone="info")
+::
+```
+
+Model variables (`count`, `name`) are shared across all components within the block.
+Interactive components auto-wire callbacks to update the shared model.
 
 ## Dependencies
 
 - [rabbita](https://github.com/moonbit-community/rabbita) — UI framework
 - [mizchi/markdown](https://github.com/mizchi/markdown) — Markdown parser
+- [moonbitlang/x](https://github.com/moonbitlang/x) — filesystem utilities
+- [moonbitlang/async](https://github.com/moonbitlang/core) — async runtime
+- [Yoorkin/ArgParser](https://github.com/Yoorkin/ArgParser) — CLI argument parsing
+
+## CLI Commands
+
+- `moonblox init <dir>` — scaffold a new project
+- `moonblox build <dir>` — build static site to dist/
+- `moonblox serve <dir> [--port 3000]` — start dev server with live reload
 
 ## License
 
