@@ -20,7 +20,9 @@ cmd/moonblox/page_shell.mbt
 cmd/moonblox/sample_post_md.mbt
 
 # AI coding
+.agents/
 .claude/
+AGENTS.md
 CLAUDE.md
 openspec/
 skills-lock.json
