@@ -6,15 +6,19 @@ pub fn scaffold(
   components? : Array[String] = [],
   quiet? : Bool = false,
   empty? : Bool = false,
-) -> Unit {
+) -> Result[Unit, String] {
   let comps = if components.length() == 0 {
     all_component_names()
   } else {
     components
   }
   do_scaffold(dir, theme, comps, quiet, empty) catch {
-    err => println("Error: \{err}")
+    err => {
+      println("Error: \{err}")
+      return Err(err.to_string())
+    }
   }
+  Ok(())
 }
 
 ///|

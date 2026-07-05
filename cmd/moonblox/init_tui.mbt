@@ -162,7 +162,7 @@ fn update(
               selected_comps.push(names[i])
             }
           }
-          scaffold(
+          let _ = scaffold(
             name,
             theme=theme_name,
             components=selected_comps,

@@ -82,11 +82,14 @@ async fn main {
 
           if headless {
             if dir == "" || dir == "." {
-              println(
+              abort(
                 "Error: --headless requires a project directory. Use: moonblox-cli init <dir> --headless",
               )
             } else {
-              scaffold(dir, theme~, components=[], empty~, quiet~)
+              match scaffold(dir, theme~, components=[], empty~, quiet~) {
+                Ok(_) => ()
+                Err(e) => abort("Scaffold failed: \{e}")
+              }
             }
           } else {
             let default_dir = if dir == "" || dir == "." { "" } else { dir }
@@ -98,15 +101,20 @@ async fn main {
               None =>
                 // TUI failed (non-TTY or error) — fall back to direct scaffold if dir provided
                 if dir != "" && dir != "." {
-                  scaffold(
-                    dir,
-                    theme="blog",
-                    components=[],
-                    empty=false,
-                    quiet=false,
-                  )
-                  println("Created MoonBlox site at \{dir}/")
-                  println("  cd \{dir} && moonblox-cli serve")
+                  match
+                    scaffold(
+                      dir,
+                      theme="blog",
+                      components=[],
+                      empty=false,
+                      quiet=false,
+                    ) {
+                    Ok(_) => {
+                      println("Created MoonBlox site at \{dir}/")
+                      println("  cd \{dir} && moonblox-cli serve")
+                    }
+                    Err(e) => println("Error: Scaffold failed: \{e}")
+                  }
                 }
             }
           }
