@@ -1,19 +1,20 @@
-<p align="center">
+<div align="center">
   <h1>MoonBlox</h1>
   <p><em>Write Markdown. Embed MoonBit components. Ship interactive pages.</em></p>
-</p>
+</div>
 
 ```
 @badge(text: "new", tone: "info")
 
-@counter(initial: 0)
+@counter(value: 0)
 
 :::callout(type: "note", title: "Tip")
 Your Markdown content here.
 :::
 
-::badge_board { name = "guest", count = 0 }
-  @badge(text=name, tone="info")
+::score_panel { count = 0 }
+  @metric(value=count, label="Clicks")
+  @chart(value=count, max=10, label="Progress")
   @counter(value=count)
 ::
 ```
@@ -48,51 +49,36 @@ my-site/
   dist/                    # built output
 ```
 
-## Component Interface
+## Components
 
-All components use a unified `pub fn -> @rabbita.Html` interface:
+Use built-in or project-local components directly from Markdown:
 
-**Inline component** (badge):
-```moonbit
-pub fn badge(text? : String = "", tone? : String = "default") -> @rabbita.Html {
-  @html.span(class="badge badge--\{tone}", [@html.text(text)])
-}
+```md
+@badge(text: "stable", tone: "success")
+
+:::callout(type: "note", title: "Tip")
+Markdown content can live inside container components.
+:::
 ```
 
-**Interactive component** (counter):
-```moonbit
-pub fn counter(value? : Double = 0.0, on_change? : (Double) -> Unit = fn(_) { () }) -> @rabbita.Html {
-  @html.div(class="counter", [
-    @html.button(on_click=fn() { on_change(value - 1.0) }, [@html.text("-")]),
-    @html.span([@html.text(value.to_string())]),
-    @html.button(on_click=fn() { on_change(value + 1.0) }, [@html.text("+")]),
-  ])
-}
-```
-
-**Container component** (callout):
-```moonbit
-pub fn callout(children : Array[@rabbita.Html], type_? : String = "note", title? : String = "") -> @rabbita.Html {
-  ...
-}
-```
-
-The build system auto-generates `_props.mbt` (type-safe prop extraction) and a `_cell` adapter
-that wires your pure Html function into rabbita's Cell tree. No Props structs or Model/Msg types needed.
+For custom component authoring and the MoonBit interface details, see
+[`docs-site/content/components.md`](docs-site/content/components.md).
 
 ### Structured Block Syntax
 
-Use `::name { model } { body }::` to share state between components:
+Use `::name { model } body ::` to share state between components:
 
 ```md
-::dashboard { count = 0, name = "guest" }
+::dashboard { count = 0 }
+  @metric(value=count, label="Clicks")
+  @chart(value=count, max=10, label="Progress")
   @counter(value=count)
-  @badge(text=name, tone="info")
 ::
 ```
 
-Model variables (`count`, `name`) are shared across all components within the block.
-Interactive components auto-wire callbacks to update the shared model.
+Here, `counter` updates `count`; `metric` and `chart` read the same value and
+re-render when it changes. Interactive components auto-wire callbacks to update
+the shared model.
 
 ## Dependencies
 

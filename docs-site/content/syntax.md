@@ -37,12 +37,13 @@ This is a callout with **Markdown** content inside.
 Use `::name { model } body ::` for components with shared state.  
 The model variables use `=` syntax (MoonBit style).
 
-**Example** — a counter component with shared state.  
+**Example** - a counter updates shared state while other components display it.  
 The model `count = 0` initializes `count` to `0`:
 
-- `::counter { count = 0 }` starts the block
-- `@badge(text: "{count}", tone: "info")` displays the current count
-- `@counter(value: "{count}", on_change: set_count)` renders the counter
+- `::score_panel { count = 0 }` starts the block
+- `@metric(value=count, label="Clicks")` displays the current count
+- `@chart(value=count, max=10, label="Progress")` visualizes the same count
+- `@counter(value=count)` renders the control that updates `count`
 - `::` ends the block
 
 ## Code Blocks
