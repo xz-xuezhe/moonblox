@@ -241,7 +241,11 @@ fn render_list(
     }
     items.push(@html.li(kids))
   }
-  @html.ul(items)
+  if lst.ordered {
+    @html.ol(items)
+  } else {
+    @html.ul(items)
+  }
 }
 
 // --- Document rendering ---

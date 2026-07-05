@@ -73,6 +73,7 @@ pub(all) struct BlockContainer {
 
 ///|
 pub(all) struct BlockList {
+  ordered : Bool
   tight : Bool
   items : Array[ListItem]
 }

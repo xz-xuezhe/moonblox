@@ -147,7 +147,7 @@ fn convert_block(block : @markdown.Block, source : String) -> Array[@ast.Block] 
           children: convert_blocks(items[i].children, source),
         })
       }
-      [@ast.Block::List({ tight, items: list_items })]
+      [@ast.Block::List({ ordered: false, tight, items: list_items })]
     }
     @markdown.Block::OrderedList(tight~, items~, ..) => {
       let list_items : Array[@ast.ListItem] = []
@@ -156,7 +156,7 @@ fn convert_block(block : @markdown.Block, source : String) -> Array[@ast.Block] 
           children: convert_blocks(items[i].children, source),
         })
       }
-      [@ast.Block::List({ tight, items: list_items })]
+      [@ast.Block::List({ ordered: true, tight, items: list_items })]
     }
     @markdown.Block::ThematicBreak(..) => [@ast.Block::ThematicBreak]
     @markdown.Block::HtmlBlock(html~, ..) => {

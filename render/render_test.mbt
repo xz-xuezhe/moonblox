@@ -93,8 +93,8 @@ test "render: unordered list" {
 test "render: ordered list" {
   let doc = parse_simple("1. first\n2. second")
   let html = render_doc(doc)
-  // Note: render_list always produces <ul> (no ordered list distinction yet)
-  assert_eq(html.contains("<ul>"), true)
+  assert_eq(html.contains("<ol>"), true)
+  assert_eq(html.contains("<ul>"), false)
   assert_eq(html.contains("<li>"), true)
   assert_eq(html.contains("first"), true)
 }
