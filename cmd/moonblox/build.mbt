@@ -1556,6 +1556,15 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
     )
     @fs.write_string_to_file("\{list_page_dir}/\{INDEX_HTML}", list_html)
 
+    // Copy _listing.js → index.js for list page (dev mode)
+    let list_js_src = "\{js_dir}/\{PAGES_DIR}/_listing/_listing.js"
+    if @fs.path_exists(list_js_src) {
+      @fs.write_string_to_file(
+        "\{output_dir}/index.js",
+        @fs.read_file_to_string(list_js_src),
+      )
+    }
+
     // Write CSS to build output root
     if css != "" {
       @fs.write_string_to_file("\{output_dir}/\{STYLE_CSS}", css) catch {
@@ -2271,7 +2280,7 @@ fn slug_from_filename(filename : String) -> String {
 /// Generate markdown for the article list page
 fn generate_list_page(posts : Array[PostMeta]) -> String {
   let sb = StringBuilder::new()
-  sb.write_string("---\ntitle: Articles\n---\n\n# Articles\n\n")
+  sb.write_string("---\ntitle: Articles\n---\n\n")
   for i = 0; i < posts.length(); i = i + 1 {
     let p = posts[i]
     if p.date != "" {

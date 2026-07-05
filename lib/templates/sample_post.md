@@ -1,4 +1,8 @@
-# Hello MoonBlox
+---
+title: Hello MoonBlox
+date: __DATE__
+tags: [demo]
+---
 
 Welcome to your MoonBlox site! This is a @badge(text: "new", tone: "info") feature.
 
