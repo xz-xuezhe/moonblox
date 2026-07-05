@@ -1050,7 +1050,7 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
             }
           }
           let page_dir = "\{build_dir}/\{PAGES_DIR}/\{slug}"
-          try! @fs.create_dir(page_dir)
+          try! ensure_dir(page_dir)
           generate_page_moon_pkg(build_dir, slug)
           @fs.write_string_to_file(
             "\{page_dir}/\{MAIN_MBT}",
@@ -1098,7 +1098,7 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
   // Generate list page through the render pipeline
   let list_slug = "index"
   let list_page_dir = "\{build_dir}/\{PAGES_DIR}/\{list_slug}"
-  try! @fs.create_dir(list_page_dir)
+  try! ensure_dir(list_page_dir)
   generate_page_moon_pkg(build_dir, list_slug)
   @fs.write_string_to_file(
     "\{list_page_dir}/\{MAIN_MBT}",
@@ -1148,7 +1148,7 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
     for i = 0; i < posts.length(); i = i + 1 {
       let slug = posts[i].slug
       let page_dir = "\{pages_dir}/\{slug}"
-      try! @fs.create_dir(page_dir)
+      try! ensure_dir(page_dir)
       let html = fill_template(
         page_shell,
         posts[i].title,
@@ -1160,7 +1160,7 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
 
     // Write list page HTML
     let list_page_dir = "\{pages_dir}/index"
-    try! @fs.create_dir(list_page_dir)
+    try! ensure_dir(list_page_dir)
     let list_html = fill_template(page_shell, "Articles", "index", "").replace_all(
       old="../style.css",
       new="../../style.css",
@@ -1188,7 +1188,7 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
     for i = 0; i < posts.length(); i = i + 1 {
       let slug = posts[i].slug
       let page_dist = "\{dist_dir}/\{slug}"
-      try! @fs.create_dir(page_dist)
+      try! ensure_dir(page_dist)
       // Copy JS
       let js_src = "\{js_dir}/\{PAGES_DIR}/\{slug}/\{slug}.js"
       if @fs.path_exists(js_src) {
@@ -1250,6 +1250,14 @@ fn remove_dir_all(dir : String) -> Unit raise {
     }
   }
   try! @fs.remove_dir(dir)
+}
+
+///|
+/// Create directory if it doesn't already exist (idempotent).
+fn ensure_dir(path : String) -> Unit raise {
+  if !@fs.path_exists(path) {
+    try! @fs.create_dir(path)
+  }
 }
 
 ///|
