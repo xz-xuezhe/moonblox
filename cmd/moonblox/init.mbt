@@ -1,7 +1,16 @@
 ///|
 /// MoonBlox scaffold — `moonblox init <dir>`
-pub fn scaffold(dir : String) -> Unit {
-  do_scaffold(dir) catch {
+pub fn scaffold(
+  dir : String,
+  theme? : String = "blog",
+  components? : Array[String] = [],
+) -> Unit {
+  let comps = if components.length() == 0 {
+    all_component_names()
+  } else {
+    components
+  }
+  do_scaffold(dir, theme, comps) catch {
     err => println("Error: \{err}")
   }
 }
@@ -48,29 +57,83 @@ fn today() -> String {
 }
 
 ///|
-fn do_scaffold(dir : String) -> Unit raise {
+fn do_scaffold(
+  dir : String,
+  theme : String,
+  components : Array[String],
+) -> Unit raise {
+  let docs_config =
+    #|{
+    #|  "input": "docs",
+    #|  "output": "dist",
+    #|  "components": "./components",
+    #|  "theme": "docs"
+    #|}
+  let config_json = if theme == "docs" {
+    docs_config
+  } else {
+    default_config_json
+  }
+  let content_dir = if theme == "docs" { "docs" } else { "posts" }
+
   mkdir(dir)
   mkdir("\{dir}/\{COMPONENTS_DIR}")
-  mkdir("\{dir}/posts")
+  mkdir("\{dir}/\{content_dir}")
   mkdir("\{dir}/\{THEME_DIR}")
 
-  write(dir, "moonblox.json", default_config_json)
+  write(dir, "moonblox.json", config_json)
   let date = today()
   let post = sample_post_md.replace(old="__DATE__", new=date)
-  write(dir, "posts/hello.md", post)
+  write(dir, "\{content_dir}/hello.md", post)
   write(dir, "\{THEME_DIR}/base.css", base_css)
 
-  scaffold_component(dir, "badge", badge_mbt, badge_css, badge_moon_pkg)
-  scaffold_component(dir, "counter", counter_mbt, counter_css, counter_moon_pkg)
-  scaffold_component(dir, "callout", callout_mbt, callout_css, callout_moon_pkg)
-  scaffold_component(dir, "card", card_mbt, card_css, card_moon_pkg)
-  scaffold_component(dir, "grid", grid_mbt, grid_css, grid_moon_pkg)
-  scaffold_component(dir, "metric", metric_mbt, metric_css, metric_moon_pkg)
-  scaffold_component(dir, "chart", chart_mbt, chart_css, chart_moon_pkg)
-  scaffold_component(dir, "graph", graph_mbt, graph_css, graph_moon_pkg)
+  for i = 0; i < components.length(); i = i + 1 {
+    let name = components[i]
+    match name {
+      "badge" =>
+        scaffold_component(dir, "badge", badge_mbt, badge_css, badge_moon_pkg)
+      "counter" =>
+        scaffold_component(
+          dir, "counter", counter_mbt, counter_css, counter_moon_pkg,
+        )
+      "callout" =>
+        scaffold_component(
+          dir, "callout", callout_mbt, callout_css, callout_moon_pkg,
+        )
+      "card" =>
+        scaffold_component(dir, "card", card_mbt, card_css, card_moon_pkg)
+      "grid" =>
+        scaffold_component(dir, "grid", grid_mbt, grid_css, grid_moon_pkg)
+      "metric" =>
+        scaffold_component(
+          dir, "metric", metric_mbt, metric_css, metric_moon_pkg,
+        )
+      "chart" =>
+        scaffold_component(dir, "chart", chart_mbt, chart_css, chart_moon_pkg)
+      "graph" =>
+        scaffold_component(dir, "graph", graph_mbt, graph_css, graph_moon_pkg)
+      "sidebar" =>
+        scaffold_component(
+          dir, "sidebar", sidebar_mbt, sidebar_css, sidebar_moon_pkg,
+        )
+      "breadcrumbs" =>
+        scaffold_component(
+          dir, "breadcrumbs", breadcrumbs_mbt, breadcrumbs_css, breadcrumbs_moon_pkg,
+        )
+      "prev_next" =>
+        scaffold_component(
+          dir, "prev_next", prev_next_mbt, prev_next_css, prev_next_moon_pkg,
+        )
+      _ => println("  (skip unknown component: \{name})")
+    }
+  }
 
   println("Created MoonBlox site at \{dir}/")
-  println("  cd \{dir} && moonblox build")
+  if theme == "docs" {
+    println("  cd \{dir}/docs && moonblox build")
+  } else {
+    println("  cd \{dir}/posts && moonblox build")
+  }
 }
 
 ///|

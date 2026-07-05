@@ -10,6 +10,9 @@ import {
   "moonbitlang/async/socket",
   "moonbitlang/async/websocket",
   "TheWaWaR/clap",
+  "moonbit-community/rabbita_tui" @tui,
+  "moonbit-community/rabbita_tui/widgets",
+  "moonbitlang/core/immut/vector",
   "xz-xuezhe/moonblox/convert",
   "xz-xuezhe/moonblox/theme",
 }
