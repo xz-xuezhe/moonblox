@@ -104,6 +104,11 @@ fn broadcast(
 }
 
 ///|
+fn is_safe_request_path(path : String) -> Bool {
+  path.has_prefix("/") && !path.contains("..") && !path.contains("\\")
+}
+
+///|
 async fn handle_request(
   dist_dir : String,
   request : @http.Request,
@@ -122,6 +127,16 @@ async fn handle_request(
   }
 
   let path = if request.path == "/" { "/\{INDEX_HTML}" } else { request.path }
+
+  guard is_safe_request_path(path) else {
+    conn
+    ..send_response(400, "Bad Request", extra_headers={
+      "Content-Type": "text/plain",
+    })
+    ..write("Bad Request")
+    .end_response()
+    return
+  }
 
   // WebSocket upgrade — warren's exact handle_ws pattern
   if path == "/__moonblox/events" {
