@@ -411,6 +411,17 @@ async fn incremental_rebuild(
         }
       }
 
+      // Run moon check first — catches type errors early
+      let check_result = @process.run(
+        "moon",
+        ["check", "--target", "js"],
+        cwd=build_dir,
+      )
+      guard check_result == 0 else {
+        println("Error: moon check failed. Fix type errors before building.")
+        return false
+      }
+
       // Run moon build
       let moon_args = if dev_mode {
         ["build", "--target", "js"]
@@ -460,6 +471,17 @@ async fn incremental_rebuild(
           return false
         }
       }
+      // Run moon check first — catches type errors early
+      let check_result = @process.run(
+        "moon",
+        ["check", "--target", "js"],
+        cwd=build_dir,
+      )
+      guard check_result == 0 else {
+        println("Error: moon check failed. Fix type errors before building.")
+        return false
+      }
+
       // Run moon build
       let moon_args = if dev_mode {
         ["build", "--target", "js"]
@@ -1472,6 +1494,17 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
 
   // Collect CSS: base.css + component .css files
   let css = collect_css(build_dir)
+
+  // Run moon check first — catches type errors early
+  let check_result = @process.run(
+    "moon",
+    ["check", "--target", "js"],
+    cwd=build_dir,
+  )
+  guard check_result == 0 else {
+    println("Error: moon check failed. Fix type errors before building.")
+    return false
+  }
 
   // Run moon build
   let moon_args = if dev_mode {
