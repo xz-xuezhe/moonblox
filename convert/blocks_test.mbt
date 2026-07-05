@@ -92,6 +92,37 @@ test "parse_markdown: container" {
 }
 
 ///|
+test "parse_markdown: container keeps first paragraph after header" {
+  let doc = parse_markdown(":::grid(cols: 2)\nGrid item A\n\nGrid item B\n:::")
+  assert_eq(doc.children.length(), 1)
+  match doc.children[0] {
+    @ast.Block::ContainerComponent(cc) => {
+      assert_eq(cc.name, "grid")
+      assert_eq(cc.children.length(), 2)
+      match cc.children[0] {
+        @ast.Block::Paragraph(p) =>
+          match p.children[0] {
+            @ast.Inline::Markdown(@markdown.Inline::Text(content~, ..)) =>
+              assert_eq(content, "Grid item A")
+            _ => assert_eq("expected first paragraph text", "")
+          }
+        _ => assert_eq("expected first paragraph", "")
+      }
+      match cc.children[1] {
+        @ast.Block::Paragraph(p) =>
+          match p.children[0] {
+            @ast.Inline::Markdown(@markdown.Inline::Text(content~, ..)) =>
+              assert_eq(content, "Grid item B")
+            _ => assert_eq("expected second paragraph text", "")
+          }
+        _ => assert_eq("expected second paragraph", "")
+      }
+    }
+    _ => assert_eq("expected ContainerComponent", "")
+  }
+}
+
+///|
 test "parse_markdown: frontmatter" {
   let doc = parse_markdown("---\ntitle: Hello\ndate: 2024-01-01\n---\ncontent")
   assert_eq(doc.meta.length(), 2)

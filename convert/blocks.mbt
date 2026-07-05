@@ -337,6 +337,57 @@ fn try_extract_container(
   Some((name, args, join_lines(body_lines)))
 }
 
+///|
+fn push_markdown_blocks(target : Array[@ast.Block], text : String) -> Unit {
+  if text.trim() != "" {
+    let doc = parse_markdown(text)
+    for i = 0; i < doc.children.length(); i = i + 1 {
+      target.push(doc.children[i])
+    }
+  }
+}
+
+///|
+fn parse_container_start(
+  text : String,
+) -> (String, Map[String, @ast.Value], String, Bool)? {
+  let lines = split_lines(text)
+  guard lines.length() > 0 else { return None }
+  let header = lines[0].trim().to_owned()
+  guard header.has_prefix(":::") && header != ":::" else { return None }
+  guard @parser.parse_container_header(header) is Some((name, args)) else {
+    return None
+  }
+  let body_lines : Array[String] = []
+  let mut closed = false
+  let mut j = 1
+  while j < lines.length() {
+    if lines[j].trim() == ":::" {
+      closed = true
+      break
+    }
+    body_lines.push(lines[j])
+    j = j + 1
+  }
+  Some((name, args, join_lines(body_lines), closed))
+}
+
+///|
+fn split_container_close(text : String) -> String? {
+  let lines = split_lines(text)
+  guard lines.length() > 0 else { return None }
+  let mut last_idx = lines.length() - 1
+  while last_idx > 0 && lines[last_idx].trim() == "" {
+    last_idx = last_idx - 1
+  }
+  guard lines[last_idx].trim() == ":::" else { return None }
+  let body_lines : Array[String] = []
+  for j = 0; j < last_idx; j = j + 1 {
+    body_lines.push(lines[j])
+  }
+  Some(join_lines(body_lines))
+}
+
 // --- Structured block detection ---
 
 ///|
@@ -409,23 +460,34 @@ fn merge_containers(blocks : Array[@ast.Block]) -> Array[@ast.Block] {
       @ast.Block::Paragraph(p) => {
         let text = inline_to_markdown(p.children)
         if text.has_prefix(":::") {
-          match @parser.parse_container_header(text.trim().to_owned()) {
-            Some((name, args)) => {
+          match parse_container_start(text) {
+            Some((name, args, first_body, closed)) => {
               let inner : Array[@ast.Block] = []
+              push_markdown_blocks(inner, first_body)
               i = i + 1
-              while i < blocks.length() {
+              let mut found_close = closed
+              while !found_close && i < blocks.length() {
                 match blocks[i] {
                   @ast.Block::Paragraph(inner_p) => {
-                    let t = inline_to_markdown(inner_p.children).trim()
-                    if t == ":::" {
-                      i = i + 1
-                      break
+                    let t = inline_to_markdown(inner_p.children)
+                    match split_container_close(t) {
+                      Some(body) => {
+                        push_markdown_blocks(inner, body)
+                        found_close = true
+                        i = i + 1
+                        break
+                      }
+                      None => {
+                        inner.push(blocks[i])
+                        i = i + 1
+                      }
                     }
                   }
-                  _ => ()
+                  _ => {
+                    inner.push(blocks[i])
+                    i = i + 1
+                  }
                 }
-                inner.push(blocks[i])
-                i = i + 1
               }
               let processed = merge_containers(inner)
               result.push(
