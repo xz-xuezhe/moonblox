@@ -390,15 +390,15 @@ async fn incremental_rebuild(
           0
         }
       })
-      let list_page_dir = "\{build_dir}/\{PAGES_DIR}/index"
+      let list_page_dir = "\{build_dir}/\{PAGES_DIR}/_listing"
       try {
         ensure_dir(list_page_dir)
-        generate_page_moon_pkg(build_dir, "index")
+        generate_page_moon_pkg(build_dir, "_listing")
         @fs.write_string_to_file(
           "\{list_page_dir}/\{MAIN_MBT}",
           generate_main_mbt(generate_list_page(posts)),
         )
-        println("Updated: pages/index/")
+        println("Updated: pages/_listing/")
       } catch {
         e => println("Warning: failed to regenerate list page: \{e}")
       }
@@ -1452,7 +1452,7 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
   })
 
   // Generate list page through the render pipeline
-  let list_slug = "index"
+  let list_slug = "_listing"
   let list_page_dir = "\{build_dir}/\{PAGES_DIR}/\{list_slug}"
   try! ensure_dir(list_page_dir)
   generate_page_moon_pkg(build_dir, list_slug)
@@ -1515,7 +1515,7 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
     }
 
     // Write list page HTML
-    let list_page_dir = "\{pages_dir}/index"
+    let list_page_dir = "\{pages_dir}/_listing"
     try! ensure_dir(list_page_dir)
     let list_html = fill_template(page_shell, "Articles", "index", "").replace_all(
       old="../style.css",
@@ -1564,8 +1564,8 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
       @fs.write_string_to_file("\{page_dist}/\{INDEX_HTML}", html)
     }
 
-    // Handle list page (slug "index") — copy JS and write HTML to dist root
-    let list_js_src = "\{js_dir}/\{PAGES_DIR}/index/index.js"
+    // Handle list page (slug "_listing") — copy JS and write HTML to dist root
+    let list_js_src = "\{js_dir}/\{PAGES_DIR}/_listing/_listing.js"
     if @fs.path_exists(list_js_src) {
       @fs.write_string_to_file(
         "\{dist_dir}/index.js",

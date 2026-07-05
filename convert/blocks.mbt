@@ -3,8 +3,41 @@
 // Extract inline text from a block's span in the source, strip trailing \n
 
 ///|
+/// Convert a code-point index (from @markdown.Span) to a UTF-16 index
+/// usable with `source[start:end]`. Handles non-BMP chars (emoji) correctly
+/// by counting surrogate pairs as 2 UTF-16 code units per code point.
+fn cp_to_utf16_offset(source : String, cp_idx : Int) -> Int {
+  if cp_idx <= 0 {
+    return 0
+  }
+  let len = source.length()
+  let mut utf16_pos = 0
+  let mut cp_pos = 0
+  while utf16_pos < len && cp_pos < cp_idx {
+    let cu = source.unsafe_get(utf16_pos)
+    if cu.is_leading_surrogate() && utf16_pos + 1 < len {
+      let cu2 = source.unsafe_get(utf16_pos + 1)
+      if cu2.is_trailing_surrogate() {
+        utf16_pos += 2
+      } else {
+        utf16_pos += 1
+      }
+    } else {
+      utf16_pos += 1
+    }
+    cp_pos += 1
+  }
+  utf16_pos
+}
+
+///|
 fn raw_span_text(source : String, span : @markdown.Span) -> String {
-  let raw = source[span.from:span.to].to_owned()
+  let from = cp_to_utf16_offset(source, span.from)
+  let to = cp_to_utf16_offset(source, span.to)
+  let len = source.length()
+  let start = if from < 0 { 0 } else if from > len { len } else { from }
+  let end = if to < start { start } else if to > len { len } else { to }
+  let raw = source[start:end].to_owned()
   let len = raw.length()
   if len > 0 && raw.get_char(len - 1) is Some('\n') {
     raw[0:len - 1].to_owned()

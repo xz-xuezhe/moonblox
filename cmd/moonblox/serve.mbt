@@ -174,8 +174,8 @@ async fn handle_request(
         file_path = pages_path
       }
     } else if path == "/\{INDEX_HTML}" {
-      // Root request — serve list page at pages/index/index.html
-      let root_index = "\{dist_dir}/pages/index/\{INDEX_HTML}"
+      // Root request — serve list page at pages/_listing/index.html
+      let root_index = "\{dist_dir}/pages/_listing/\{INDEX_HTML}"
       if @fs.path_exists(root_index) {
         file_path = root_index
       }
