@@ -7,7 +7,7 @@ order: 1
 
 A Markdown-first programmable site generator powered by [MoonBit](https://moonbitlang.com) and [rabbita](https://github.com/moonbit-community/rabbita).
 
-Write Markdown, embed interactive components in MoonBit, and `moonblox build` outputs a static site.
+Write Markdown, embed interactive components in MoonBit, and `moonblox-cli build` outputs a static site.
 
 ## Features
 
@@ -24,9 +24,10 @@ Write Markdown, embed interactive components in MoonBit, and `moonblox build` ou
 ## Quick Start
 
 ```bash
-moonblox init my-site
+moon install xz-xuezhe/moonblox-cli
+moonblox-cli init my-site
 cd my-site
-moonblox serve
+moonblox-cli serve
 ```
 
 Open `http://localhost:3000` to see your site with live reload.

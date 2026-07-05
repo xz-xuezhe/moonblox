@@ -1,5 +1,5 @@
 ///|
-/// MoonBlox scaffold — `moonblox init <dir>`
+/// MoonBlox scaffold — `moonblox-cli init <dir>`
 pub fn scaffold(
   dir : String,
   theme? : String = "blog",
@@ -155,9 +155,9 @@ fn do_scaffold(
   }
   if !quiet {
     if theme == "docs" {
-      println("  cd \{dir}/docs && moonblox build")
+      println("  cd \{dir}/docs && moonblox-cli build")
     } else {
-      println("  cd \{dir}/posts && moonblox build")
+      println("  cd \{dir}/posts && moonblox-cli build")
     }
   }
 }

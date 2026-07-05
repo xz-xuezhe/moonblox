@@ -2,10 +2,10 @@
 const DEFAULT_PORT : Int = 3000
 
 ///|
-/// MoonBlox CLI — `moonblox <command> [args]`
+/// MoonBlox CLI — `moonblox-cli <command> [args]`
 async fn main {
   let parser = @clap.Parser::new(
-    prog="moonblox",
+    prog="moonblox-cli",
     description="Markdown-first programmable site generator",
     subcmds={
       "init": @clap.SubCommand::new(
@@ -62,14 +62,14 @@ async fn main {
           match init_tui(default_dir~) {
             Some(name) => {
               println("Created MoonBlox site at \{name}/")
-              println("  cd \{name} && moonblox serve")
+              println("  cd \{name} && moonblox-cli serve")
             }
             None =>
               // TUI failed (non-TTY or error) — fall back to direct scaffold if dir provided
               if dir != "" && dir != "." {
                 scaffold(dir, theme="blog")
                 println("Created MoonBlox site at \{dir}/")
-                println("  cd \{dir} && moonblox serve")
+                println("  cd \{dir} && moonblox-cli serve")
               }
           }
         }

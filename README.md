@@ -25,7 +25,7 @@ Your Markdown content here.
 - **Tables**: Markdown table support with alignment
 - **8 built-in components**: badge, counter, callout, card, grid, metric, chart, graph
 - **Configuration**: `moonblox.json` for custom input/output/component paths
-- **Live reload**: `moonblox serve` with file watcher and WebSocket reload
+- **Live reload**: `moonblox-cli serve` with file watcher and WebSocket reload
 - **Incremental builds**: Dev server skips unchanged files, uses debug builds
 
 ## Quick Start
@@ -33,11 +33,19 @@ Your Markdown content here.
 Requires [MoonBit](https://www.moonbitlang.com/download/) toolchain.
 
 ```bash
-moonblox init my-site
-cd my-site
-moonblox serve        # dev server with live reload
-moonblox build        # production build
+moon install xz-xuezhe/moonblox-cli
 ```
+
+```bash
+moonblox-cli init my-site
+cd my-site
+moonblox-cli serve        # dev server with live reload
+moonblox-cli build        # production build
+```
+
+## Documentation
+
+Read the full documentation at <https://xz-xuezhe.github.io/moonblox/>.
 
 ## Project Structure
 
@@ -62,7 +70,7 @@ Markdown content can live inside container components.
 ```
 
 For custom component authoring and the MoonBit interface details, see
-[`docs-site/content/components.md`](docs-site/content/components.md).
+<https://xz-xuezhe.github.io/moonblox/components/>.
 
 ### Structured Block Syntax
 
@@ -90,9 +98,9 @@ the shared model.
 
 ## CLI Commands
 
-- `moonblox init <dir>` — scaffold a new project
-- `moonblox build <dir>` — build static site to dist/
-- `moonblox serve <dir> [--port 3000]` — start dev server with live reload
+- `moonblox-cli init <dir>` — scaffold a new project
+- `moonblox-cli build <dir>` — build static site to dist/
+- `moonblox-cli serve <dir> [--port 3000]` — start dev server with live reload
 
 ## License
 

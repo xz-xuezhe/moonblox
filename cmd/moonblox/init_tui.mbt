@@ -404,11 +404,11 @@ pub async fn init_tui(default_dir? : String = "") -> String? {
     result.val
   } catch {
     @tui.NotATty(_) => {
-      println("No terminal detected. Use: moonblox init <dir>")
+      println("No terminal detected. Use: moonblox-cli init <dir>")
       None
     }
     _ => {
-      println("Terminal error. Use: moonblox init <dir>")
+      println("Terminal error. Use: moonblox-cli init <dir>")
       None
     }
   }

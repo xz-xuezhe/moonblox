@@ -10,7 +10,8 @@ order: 2
 MoonBlox requires the [MoonBit toolchain](https://moonbitlang.com/download/).
 
 ```bash
-moonblox init my-site
+moon install xz-xuezhe/moonblox-cli
+moonblox-cli init my-site
 cd my-site
 ```
 
@@ -46,7 +47,7 @@ MoonBlox supports **Markdown** inside container blocks.
 ## Building
 
 ```bash
-moonblox build
+moonblox-cli build
 ```
 
 Output goes to `dist/` — a complete static site ready to deploy.
