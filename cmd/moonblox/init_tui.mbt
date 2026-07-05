@@ -38,8 +38,6 @@ enum Step {
   Theme
   Components
   Confirm
-  Scaffolding
-  Done
 } derive(Eq, Debug)
 
 ///|
@@ -98,8 +96,6 @@ fn step_title(step : Step) -> String {
     Theme => "2/4  Choose theme"
     Components => "3/4  Select components"
     Confirm => "4/4  Review & confirm"
-    Scaffolding => "Creating project..."
-    Done => "Done!"
   }
 }
 
@@ -110,8 +106,6 @@ fn step_index(step : Step) -> Int {
     Theme => 2
     Components => 3
     Confirm => 4
-    Scaffolding => 5
-    Done => 5
   }
 }
 
@@ -131,9 +125,7 @@ fn next_step(step : Step) -> Step {
     Dir => Theme
     Theme => Components
     Components => Confirm
-    Confirm => Scaffolding
-    Scaffolding => Done
-    Done => Done
+    _ => step
   }
 }
 
@@ -144,8 +136,6 @@ fn prev_step(step : Step) -> Step {
     Theme => Dir
     Components => Theme
     Confirm => Components
-    Scaffolding => Confirm
-    Done => Dir
   }
 }
 
@@ -154,48 +144,45 @@ fn update(
   _emit : @tui.Emit[Msg],
   msg : Msg,
   model : Model,
+  result : Ref[String?],
 ) -> (@tui.Cmd, Model) {
   match msg {
     KeyPressed(@tui.Key::Ctrl("c")) => (@tui.Cmd::quit(), model)
     KeyPressed(@tui.Key::Escape) =>
       (@tui.Cmd::none(), { ..model, step: prev_step(model.step) })
     KeyPressed(@tui.Key::Enter) =>
-      (
-        @tui.Cmd::none(),
-        match model.step {
-          Dir => {
-            let name = dir_value(model)
-            if name == "" {
-              { ..model, status: "Please enter a project name" }
-            } else {
-              { ..model, step: next_step(model.step) }
+      match model.step {
+        Confirm => {
+          let name = dir_value(model)
+          let theme_name = theme_names()[selected_theme_index(model)]
+          let selected_comps : Array[String] = []
+          let names = all_component_names()
+          for i = 0; i < names.length(); i = i + 1 {
+            if i < model.comp_selected.length() && model.comp_selected[i] {
+              selected_comps.push(names[i])
             }
           }
-          Theme => { ..model, step: next_step(model.step) }
-          Components => { ..model, step: next_step(model.step) }
-          Confirm => {
-            let name = dir_value(model)
-            let theme_name = theme_names()[selected_theme_index(model)]
-            let selected_comps : Array[String] = []
-            let names = all_component_names()
-            for i = 0; i < names.length(); i = i + 1 {
-              if i < model.comp_selected.length() && model.comp_selected[i] {
-                selected_comps.push(names[i])
-              }
-            }
-            scaffold(name, theme=theme_name, components=selected_comps)
-            { ..model, step: Scaffolding, status: "Project created!" }
+          scaffold(name, theme=theme_name, components=selected_comps, quiet=true)
+          result.val = Some(name)
+          (@tui.Cmd::quit(), model)
+        }
+        Dir => {
+          let name = dir_value(model)
+          if name == "" {
+            (@tui.Cmd::none(), { ..model, status: "Please enter a project name" })
+          } else {
+            (@tui.Cmd::none(), { ..model, step: next_step(model.step) })
           }
-          Scaffolding => { ..model, step: Done }
-          Done => { ..model, step: Dir }
-        },
-      )
+        }
+        Theme => (@tui.Cmd::none(), { ..model, step: next_step(model.step) })
+        Components => (@tui.Cmd::none(), { ..model, step: next_step(model.step) })
+      }
     KeyPressed(@tui.Key::Up) =>
       (
         @tui.Cmd::none(),
         match model.step {
           Theme => {
-            let msg = @widgets.ListMove(-1, 5)
+            let msg = @widgets.ListMove(-1, 3)
             { ..model, theme_list: model.theme_list.update(msg) }
           }
           Components => {
@@ -217,7 +204,7 @@ fn update(
         @tui.Cmd::none(),
         match model.step {
           Theme => {
-            let msg = @widgets.ListMove(1, 5)
+            let msg = @widgets.ListMove(1, 3)
             { ..model, theme_list: model.theme_list.update(msg) }
           }
           Components => {
@@ -266,7 +253,7 @@ fn view(model : Model) -> @tui.Node {
   let width = model.width
 
   let step_label = step_title(model.step)
-  let progress = step_index(model.step).to_string() + "/5"
+  let progress = step_index(model.step).to_string() + "/4"
 
   @tui.vstack([
     @tui.hstack([
@@ -280,8 +267,6 @@ fn view(model : Model) -> @tui.Node {
       Theme => theme_view(model, width)
       Components => components_view(model, width)
       Confirm => confirm_view(model, width)
-      Scaffolding => scaffold_view(model, width)
-      Done => done_view(model, width)
     },
     @tui.text("  "),
     @tui.text(style=muted_style(), @tui.fit_line(model.status, width)),
@@ -387,24 +372,6 @@ fn confirm_view(model : Model, _width : Int) -> @tui.Node {
 }
 
 ///|
-fn scaffold_view(_model : Model, _width : Int) -> @tui.Node {
-  @tui.text(style=accent_style(), "Creating your MoonBlox project...")
-}
-
-///|
-fn done_view(_model : Model, _width : Int) -> @tui.Node {
-  @tui.vstack([
-    @tui.text(style=accent_style(), "Project created successfully!"),
-    @tui.text("  "),
-    @tui.text("Next steps:"),
-    @tui.text("  cd <project>"),
-    @tui.text("  moonblox serve"),
-    @tui.text("  "),
-    @tui.text("Press Enter to start a new project, or Ctrl+C to quit."),
-  ])
-}
-
-///|
 fn subscriptions(_model : Model) -> @tui.Sub[Msg] {
   @tui.Sub::batch([
     @tui.Sub::keys(fn(key : @tui.Key) -> Msg { KeyPressed(key) }),
@@ -413,19 +380,27 @@ fn subscriptions(_model : Model) -> @tui.Sub[Msg] {
 }
 
 ///|
-pub async fn init_tui(default_dir? : String = "") -> Unit {
-  let app = @tui.cell(model=initial_model(default_dir), update~, view~, subscriptions~)
-  app.run_with_options(
-    @tui.ProgramOptions::inline().hide_cursor(true).bracketed_paste(true),
-  ) catch {
-    @tui.NotATty(_) => println("No terminal detected. Use: moonblox init <dir>")
-    @tui.NativeError(msg) => {
-      println("Terminal error: \{msg}")
-      println("Use: moonblox init <dir>")
+pub async fn init_tui(default_dir? : String = "") -> String? {
+  let result : Ref[String?] = Ref(None)
+  let app = @tui.cell(
+    model=initial_model(default_dir),
+    update=fn(_emit, msg, model) { update(_emit, msg, model, result) },
+    view~,
+    subscriptions~,
+  )
+  try {
+    app.run_with_options(
+      @tui.ProgramOptions::inline().hide_cursor(true).bracketed_paste(true),
+    )
+    result.val
+  } catch {
+    @tui.NotATty(_) => {
+      println("No terminal detected. Use: moonblox init <dir>")
+      None
     }
-    @tui.UnsupportedPlatform => {
-      println("This platform does not support interactive mode.")
-      println("Use: moonblox init <dir>")
+    _ => {
+      println("Terminal error. Use: moonblox init <dir>")
+      None
     }
   }
 }

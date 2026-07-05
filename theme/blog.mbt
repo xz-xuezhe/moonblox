@@ -28,14 +28,13 @@ impl Theme for BlogTheme with fn discover_pages(self, content_dir : String) -> A
       if name.has_suffix(".md") {
         let path = "\{content_dir}/\{name}"
         let raw = @fs.read_file_to_string(path) catch { _ => continue }
-        let mut content = raw
+        let content = raw
         let meta : Map[String, String] = Map([])
         if raw.has_prefix("---") {
           let rest : StringView = raw[3:]
           match rest.find("---") {
             Some(i) => {
               let fm = rest[0:i].to_owned()
-              content = rest[i + 3:].trim_start().to_owned()
               for line_view in fm.split("\n") {
                 let line = line_view.to_owned()
                 let trimmed = line.trim().to_owned()
@@ -143,10 +142,10 @@ impl Theme for BlogTheme with fn generate_listing_markdown(
     let title = page.metadata.get("title").unwrap_or(page.slug)
     if date_str != "" {
       sb.write_string(
-        "- **[" + title + "](./" + page.slug + "/)** — " + date_str + "\n",
+        "**[" + title + "](./" + page.slug + "/)** — " + date_str + "\n\n",
       )
     } else {
-      sb.write_string("- **[" + title + "](./" + page.slug + "/)**\n")
+        sb.write_string("**[" + title + "](./" + page.slug + "/)**\n\n")
     }
   }
   sb.to_string()

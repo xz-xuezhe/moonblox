@@ -4,20 +4,21 @@ pub fn scaffold(
   dir : String,
   theme? : String = "blog",
   components? : Array[String] = [],
+  quiet? : Bool = false,
 ) -> Unit {
   let comps = if components.length() == 0 {
     all_component_names()
   } else {
     components
   }
-  do_scaffold(dir, theme, comps) catch {
+  do_scaffold(dir, theme, comps, quiet) catch {
     err => println("Error: \{err}")
   }
 }
 
 ///|
-fn mkdir(path : String) -> Unit raise {
-  println("  mkdir \{path}")
+fn mkdir(path : String, quiet : Bool) -> Unit raise {
+  if !quiet { println("  mkdir \{path}") }
   if @fs.path_exists(path) {
     if @fs.is_dir(path) {
       return // already exists as a directory — idempotent
@@ -28,9 +29,9 @@ fn mkdir(path : String) -> Unit raise {
 }
 
 ///|
-fn write(dir : String, name : String, content : String) -> Unit raise {
+fn write(dir : String, name : String, content : String, quiet : Bool) -> Unit raise {
   let path = "\{dir}/\{name}"
-  println("  write \{path}")
+  if !quiet { println("  write \{path}") }
   @fs.write_string_to_file(path, content) // propagates error to caller (do_scaffold)
 }
 
@@ -61,6 +62,7 @@ fn do_scaffold(
   dir : String,
   theme : String,
   components : Array[String],
+  quiet : Bool,
 ) -> Unit raise {
   let docs_config =
     #|{
@@ -76,63 +78,65 @@ fn do_scaffold(
   }
   let content_dir = if theme == "docs" { "docs" } else { "posts" }
 
-  mkdir(dir)
-  mkdir("\{dir}/\{COMPONENTS_DIR}")
-  mkdir("\{dir}/\{content_dir}")
-  mkdir("\{dir}/\{THEME_DIR}")
+  mkdir(dir, quiet)
+  mkdir("\{dir}/\{COMPONENTS_DIR}", quiet)
+  mkdir("\{dir}/\{content_dir}", quiet)
+  mkdir("\{dir}/\{THEME_DIR}", quiet)
 
-  write(dir, "moonblox.json", config_json)
+  write(dir, "moonblox.json", config_json, quiet)
   let date = today()
   let post = sample_post_md.replace(old="__DATE__", new=date)
-  write(dir, "\{content_dir}/hello.md", post)
-  write(dir, "\{THEME_DIR}/base.css", base_css)
+  write(dir, "\{content_dir}/hello.md", post, quiet)
+  write(dir, "\{THEME_DIR}/base.css", base_css, quiet)
 
   for i = 0; i < components.length(); i = i + 1 {
     let name = components[i]
     match name {
       "badge" =>
-        scaffold_component(dir, "badge", badge_mbt, badge_css, badge_moon_pkg)
+        scaffold_component(dir, "badge", badge_mbt, badge_css, badge_moon_pkg, quiet)
       "counter" =>
         scaffold_component(
-          dir, "counter", counter_mbt, counter_css, counter_moon_pkg,
+          dir, "counter", counter_mbt, counter_css, counter_moon_pkg, quiet,
         )
       "callout" =>
         scaffold_component(
-          dir, "callout", callout_mbt, callout_css, callout_moon_pkg,
+          dir, "callout", callout_mbt, callout_css, callout_moon_pkg, quiet,
         )
       "card" =>
-        scaffold_component(dir, "card", card_mbt, card_css, card_moon_pkg)
+        scaffold_component(dir, "card", card_mbt, card_css, card_moon_pkg, quiet)
       "grid" =>
-        scaffold_component(dir, "grid", grid_mbt, grid_css, grid_moon_pkg)
+        scaffold_component(dir, "grid", grid_mbt, grid_css, grid_moon_pkg, quiet)
       "metric" =>
         scaffold_component(
-          dir, "metric", metric_mbt, metric_css, metric_moon_pkg,
+          dir, "metric", metric_mbt, metric_css, metric_moon_pkg, quiet,
         )
       "chart" =>
-        scaffold_component(dir, "chart", chart_mbt, chart_css, chart_moon_pkg)
+        scaffold_component(dir, "chart", chart_mbt, chart_css, chart_moon_pkg, quiet)
       "graph" =>
-        scaffold_component(dir, "graph", graph_mbt, graph_css, graph_moon_pkg)
+        scaffold_component(dir, "graph", graph_mbt, graph_css, graph_moon_pkg, quiet)
       "sidebar" =>
         scaffold_component(
-          dir, "sidebar", sidebar_mbt, sidebar_css, sidebar_moon_pkg,
+          dir, "sidebar", sidebar_mbt, sidebar_css, sidebar_moon_pkg, quiet,
         )
       "breadcrumbs" =>
         scaffold_component(
-          dir, "breadcrumbs", breadcrumbs_mbt, breadcrumbs_css, breadcrumbs_moon_pkg,
+          dir, "breadcrumbs", breadcrumbs_mbt, breadcrumbs_css, breadcrumbs_moon_pkg, quiet,
         )
       "prev_next" =>
         scaffold_component(
-          dir, "prev_next", prev_next_mbt, prev_next_css, prev_next_moon_pkg,
+          dir, "prev_next", prev_next_mbt, prev_next_css, prev_next_moon_pkg, quiet,
         )
-      _ => println("  (skip unknown component: \{name})")
+      _ => if !quiet { println("  (skip unknown component: \{name})") }
     }
   }
 
-  println("Created MoonBlox site at \{dir}/")
-  if theme == "docs" {
-    println("  cd \{dir}/docs && moonblox build")
-  } else {
-    println("  cd \{dir}/posts && moonblox build")
+  if !quiet { println("Created MoonBlox site at \{dir}/") }
+  if !quiet {
+    if theme == "docs" {
+      println("  cd \{dir}/docs && moonblox build")
+    } else {
+      println("  cd \{dir}/posts && moonblox build")
+    }
   }
 }
 
@@ -143,10 +147,11 @@ fn scaffold_component(
   mbt : String,
   css : String,
   moon_pkg : String,
+  quiet : Bool,
 ) -> Unit raise {
   let comp_dir = "\{dir}/\{COMPONENTS_DIR}/\{name}"
-  mkdir(comp_dir)
-  write(comp_dir, "moon.pkg", moon_pkg)
-  write(comp_dir, "\{name}.mbt", mbt)
-  write(comp_dir, "\{name}.css", css)
+  mkdir(comp_dir, quiet)
+  write(comp_dir, "moon.pkg", moon_pkg, quiet)
+  write(comp_dir, "\{name}.mbt", mbt, quiet)
+  write(comp_dir, "\{name}.css", css, quiet)
 }

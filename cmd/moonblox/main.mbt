@@ -59,7 +59,13 @@ async fn main {
             ""
           }
           let default_dir = if dir == "" || dir == "." { "" } else { dir }
-          init_tui(default_dir=default_dir)
+          match init_tui(default_dir=default_dir) {
+            Some(name) => {
+              println("Created MoonBlox site at \{name}/")
+              println("  cd \{name} && moonblox serve")
+            }
+            None => ()
+          }
         }
         "build" => {
           let dir = if cmd.positional_args.length() > 0 {
