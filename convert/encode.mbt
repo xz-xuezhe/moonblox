@@ -145,8 +145,9 @@ fn decode_inlines(inlines : Array[@markdown.Inline]) -> Array[@ast.Inline] {
               result.push(@ast.Inline::Component(name, args))
             None => {
               let text = "@" + inner
-              for j = 0; j < text.length(); j = j + 1 {
-                result.push(wrap_md_text(text[j:j + 1].to_owned()))
+              let iter = text.iter()
+              for c in iter {
+                result.push(wrap_md_text(c.to_string()))
               }
             }
           }
