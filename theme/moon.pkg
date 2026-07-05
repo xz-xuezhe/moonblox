@@ -1,0 +1,6 @@
+import {
+  "moonbitlang/x/fs",
+  "moonbitlang/core/string",
+}
+
+supported_targets = "js+native"

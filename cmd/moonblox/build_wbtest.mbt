@@ -574,26 +574,6 @@ test "args_has_onchange: empty" {
 }
 
 ///|
-test "date_to_sortable: basic" {
-  assert_eq(date_to_sortable("2024-01-15"), "20240115")
-}
-
-///|
-test "date_to_sortable: with letters" {
-  assert_eq(date_to_sortable("Jan 2024"), "2024")
-}
-
-///|
-test "date_to_sortable: empty" {
-  assert_eq(date_to_sortable(""), "")
-}
-
-///|
-test "date_to_sortable: no digits" {
-  assert_eq(date_to_sortable("abc"), "")
-}
-
-///|
 test "parse_params: basic" {
   let params = parse_params("a : String, b : Double")
   assert_eq(params.length(), 2)

@@ -1,0 +1,6 @@
+{
+  "input": "content",
+  "output": "dist",
+  "components": "./components",
+  "theme": "docs"
+}

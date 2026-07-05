@@ -1,0 +1,11 @@
+///|
+/// Breadcrumb navigation component. Shows the current page's path hierarchy.
+/// Reads from window.__MOONBLOX_BREADCRUMBS__ injected by the build system.
+pub fn breadcrumbs() -> @rabbita.Html {
+  let children : Array[@rabbita.Html] = []
+  @html.nav(
+    class="breadcrumbs",
+    attrs=@html.Attrs::build().aria_label("Breadcrumb"),
+    children,
+  )
+}

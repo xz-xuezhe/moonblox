@@ -9,8 +9,9 @@ import {
   "moonbitlang/async/process",
   "moonbitlang/async/socket",
   "moonbitlang/async/websocket",
-  "Yoorkin/ArgParser",
+  "TheWaWaR/clap",
   "xz-xuezhe/moonblox/convert",
+  "xz-xuezhe/moonblox/theme",
 }
 
 supported_targets = "native"
@@ -162,6 +163,51 @@ options(
       "command": ":embed -i $input -o $output --name graph_moon_pkg",
       "input": "../../lib/templates/components/graph/moon.pkg",
       "output": "graph_moon_pkg.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name sidebar_mbt",
+      "input": "../../lib/templates/components/sidebar/sidebar.mbt",
+      "output": "sidebar_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name sidebar_css",
+      "input": "../../lib/templates/components/sidebar/sidebar.css",
+      "output": "sidebar_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name sidebar_moon_pkg",
+      "input": "../../lib/templates/components/sidebar/moon.pkg",
+      "output": "sidebar_moon_pkg.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name breadcrumbs_mbt",
+      "input": "../../lib/templates/components/breadcrumbs/breadcrumbs.mbt",
+      "output": "breadcrumbs_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name breadcrumbs_css",
+      "input": "../../lib/templates/components/breadcrumbs/breadcrumbs.css",
+      "output": "breadcrumbs_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name breadcrumbs_moon_pkg",
+      "input": "../../lib/templates/components/breadcrumbs/moon.pkg",
+      "output": "breadcrumbs_moon_pkg.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name prev_next_mbt",
+      "input": "../../lib/templates/components/prev_next/prev_next.mbt",
+      "output": "prev_next_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name prev_next_css",
+      "input": "../../lib/templates/components/prev_next/prev_next.css",
+      "output": "prev_next_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name prev_next_moon_pkg",
+      "input": "../../lib/templates/components/prev_next/moon.pkg",
+      "output": "prev_next_moon_pkg.mbt",
     },
   ],
 )

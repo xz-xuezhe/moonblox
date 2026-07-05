@@ -1,0 +1,15 @@
+///|
+pub fn grid(
+  children : Array[@rabbita.Html],
+  cols? : Double = 2.0,
+  gap? : String = "1rem",
+) -> @rabbita.Html {
+  @html.div(
+    style=[
+      "display: grid",
+      "grid-template-columns: repeat(\{cols.to_string()}, 1fr)",
+      "gap: \{gap}",
+    ],
+    children,
+  )
+}

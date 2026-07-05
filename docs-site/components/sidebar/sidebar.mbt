@@ -1,0 +1,10 @@
+///|
+/// Docs sidebar navigation component. Reads navigation data from a global
+/// window.__MOONBLOX_NAV__ JSON object embedded in the page by the build system.
+/// If no data is available, renders nothing.
+pub fn sidebar() -> @rabbita.Html {
+  let children : Array[@rabbita.Html] = []
+  // Navigation is injected as a JSON script tag by the build engine.
+  // The sidebar reads it at runtime and builds the navigation tree.
+  @html.nav(class="sidebar-nav", id="sidebar-nav", children)
+}

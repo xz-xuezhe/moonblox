@@ -7,9 +7,6 @@ const RABBITA_VERSION : String = "0.12.4"
 const MARKDOWN_VERSION : String = "0.6.2"
 
 ///|
-const ENGINE_VERSION : String = "0.1.0"
-
-///|
 const BUILD_DIR_NAME : String = "_moonblox"
 
 ///|
@@ -20,9 +17,6 @@ const THEME_DIR : String = "theme"
 
 ///|
 const PAGES_DIR : String = "pages"
-
-///|
-const POSTS_DIR : String = "posts"
 
 ///|
 const DIST_DIR : String = "dist"
@@ -76,18 +70,30 @@ const RABBITA_PACKAGE : String = "moonbit-community/rabbita"
 const MARKDOWN_PACKAGE : String = "mizchi/markdown"
 
 ///|
+const ENGINE_VERSION : String = "0.1.0"
+
+///|
 const MOUNT_ID : String = "app"
+
+// Theme dispatch now lives in @theme package (dispatch.mbt)
+// to work around MoonBit's cross-package trait impl visibility.
 
 ///|
 struct SiteConfig {
   input : String
   output : String
   components : String
+  theme : String
 }
 
 ///|
 fn default_config() -> SiteConfig {
-  { input: POSTS_DIR, output: DIST_DIR, components: COMPONENTS_DIR }
+  {
+    input: "posts",
+    output: DIST_DIR,
+    components: COMPONENTS_DIR,
+    theme: "blog",
+  }
 }
 
 ///|
@@ -112,10 +118,12 @@ fn read_config(dir : String) -> SiteConfig {
       } else {
         comps
       }
+      let theme_val = get_str("theme", "blog")
       {
-        input: get_str("input", POSTS_DIR),
+        input: get_str("input", "posts"),
         output: get_str("output", DIST_DIR),
         components: comps,
+        theme: theme_val,
       }
     }
     _ => default_config()
@@ -158,7 +166,7 @@ fn BuildCache::new() -> BuildCache {
 ///|
 enum ChangeType {
   NoChanges
-  PostsChanged(Array[String])
+  ContentChanged(Array[String])
   ComponentsChanged(Array[String])
   ThemeChanged
   ConfigChanged
@@ -239,27 +247,29 @@ fn detect_changes(
     }
   }
 
-  // Check posts
-  let posts_dir = "\{dir}/\{config.input}"
-  let post_hashes : Map[String, Int] = Map([])
-  let changed_posts : Array[String] = []
-  if @fs.path_exists(posts_dir) {
-    let files = @fs.read_dir(posts_dir) catch {
+  // Check content pages
+  let content_dir = "\{dir}/\{config.input}"
+  let content_hashes : Map[String, Int] = Map([])
+  let changed_pages : Array[String] = []
+  if @fs.path_exists(content_dir) {
+    let files = @fs.read_dir(content_dir) catch {
       _ => return ChangeType::FullRebuild
     }
     for i = 0; i < files.length(); i = i + 1 {
       let fname = files[i]
       if fname.has_suffix(".md") {
-        let path = "\{posts_dir}/\{fname}"
+        let path = "\{content_dir}/\{fname}"
         let content = @fs.read_file_to_string(path) catch { _ => "" }
         let h = if content != "" { hash_content(content) } else { 0 }
-        post_hashes.set(path, h)
+        content_hashes.set(path, h)
+        let slug = if fname.has_suffix(".md") {
+          fname[0:fname.length() - 3].to_owned()
+        } else {
+          fname
+        }
         match old.post_mtimes.get(path) {
-          Some(old_h) =>
-            if h != old_h {
-              changed_posts.push(slug_from_filename(fname))
-            }
-          None => changed_posts.push(slug_from_filename(fname))
+          Some(old_h) => if h != old_h { changed_pages.push(slug) }
+          None => changed_pages.push(slug)
         }
       }
     }
@@ -269,76 +279,37 @@ fn detect_changes(
     old.component_mtimes,
     comp_hashes,
   )
-  let removed_posts = has_removed_cache_entry(old.post_mtimes, post_hashes)
+  let removed_pages = has_removed_cache_entry(old.post_mtimes, content_hashes)
 
   // Update cache atomically
   cache.val = {
-    post_mtimes: post_hashes,
+    post_mtimes: content_hashes,
     component_mtimes: comp_hashes,
     theme_mtime: theme_h,
     config_mtime: config_h,
   }
 
-  // Determine change type (priority: config > theme > components+posts > components > posts)
+  // Determine change type (priority: config > theme > components+content > components > content)
   if old.config_mtime != config_h {
     return ChangeType::ConfigChanged
   }
   if old.theme_mtime != theme_h {
     return ChangeType::ThemeChanged
   }
-  if removed_components || removed_posts {
+  if removed_components || removed_pages {
     return ChangeType::FullRebuild
   }
-  if changed_comps.length() > 0 && changed_posts.length() > 0 {
+  if changed_comps.length() > 0 && changed_pages.length() > 0 {
     return ChangeType::FullRebuild
   }
   if changed_comps.length() > 0 {
     return ChangeType::ComponentsChanged(changed_comps)
   }
-  if changed_posts.length() > 0 {
-    return ChangeType::PostsChanged(changed_posts)
+  if changed_pages.length() > 0 {
+    return ChangeType::ContentChanged(changed_pages)
   }
 
   ChangeType::NoChanges
-}
-
-///|
-/// Collect post metadata from all markdown files in the posts directory.
-fn collect_post_meta(
-  posts_dir : String,
-  _config : SiteConfig,
-) -> Array[PostMeta] {
-  let posts : Array[PostMeta] = []
-  if @fs.path_exists(posts_dir) {
-    let files = @fs.read_dir(posts_dir) catch { _ => return posts }
-    for i = 0; i < files.length(); i = i + 1 {
-      let name = files[i]
-      if name.has_suffix(".md") {
-        let content = @fs.read_file_to_string("\{posts_dir}/\{name}") catch {
-          _ => continue
-        }
-        let slug = slug_from_filename(name)
-        let doc = @convert.parse_markdown(content)
-        let meta = doc.meta
-        posts.push(PostMeta::{
-          slug,
-          title: match meta.get("title") {
-            Some(t) => t
-            None => slug
-          },
-          date: match meta.get("date") {
-            Some(d) => d
-            None => ""
-          },
-          tags: match meta.get("tags") {
-            Some(t) => t
-            None => ""
-          },
-        })
-      }
-    }
-  }
-  posts
 }
 
 ///|
@@ -355,15 +326,16 @@ async fn incremental_rebuild(
       println("No changes detected.")
       true
     }
-    PostsChanged(slugs) => {
-      let posts_dir = "\{dir}/\{config.input}"
+    ContentChanged(slugs) => {
+      let theme_kind = @theme.resolve_theme(config.theme)
+      let content_dir = "\{dir}/\{config.input}"
       let comp_callbacks = build_callback_map(build_dir)
       let all_generated_comps : Array[String] = []
 
       for i = 0; i < slugs.length(); i = i + 1 {
         let slug = slugs[i]
         let fname = slug + ".md"
-        let content = @fs.read_file_to_string("\{posts_dir}/\{fname}") catch {
+        let content = @fs.read_file_to_string("\{content_dir}/\{fname}") catch {
           _ => {
             println("Warning: cannot read '\{fname}', skipping")
             continue
@@ -402,25 +374,17 @@ async fn incremental_rebuild(
       }
 
       // Regenerate list page
-      let posts = collect_post_meta(posts_dir, config)
-      posts.sort_by(fn(a, b) {
-        let da = date_to_sortable(a.date)
-        let db = date_to_sortable(b.date)
-        if da > db {
-          -1
-        } else if da < db {
-          1
-        } else {
-          0
-        }
-      })
+      let pages = @theme.theme_discover_pages(theme_kind, content_dir)
+      let pages = @theme.theme_sort_pages(theme_kind, pages)
       let list_page_dir = "\{build_dir}/\{PAGES_DIR}/_listing"
       try {
         ensure_dir(list_page_dir)
         generate_page_moon_pkg(build_dir, "_listing")
         @fs.write_string_to_file(
           "\{list_page_dir}/\{MAIN_MBT}",
-          generate_main_mbt(generate_list_page(posts)),
+          generate_main_mbt(
+            @theme.theme_generate_listing_markdown(theme_kind, pages),
+          ),
         )
         println("Updated: pages/_listing/")
       } catch {
@@ -1372,20 +1336,6 @@ fn add_structured_cells_to_registry(
 }
 
 ///|
-/// Strip non-digit characters from a date string for numeric comparison.
-/// E.g., "2024-01-15" -> "20240115", "Jan 2024" -> "2024"
-fn date_to_sortable(d : String) -> String {
-  let result = StringBuilder::new()
-  for i = 0; i < d.length(); i = i + 1 {
-    match d.get_char(i) {
-      Some(c) if c >= '0' && c <= '9' => result.write_char(c)
-      _ => ()
-    }
-  }
-  result.to_string()
-}
-
-///|
 /// moonblox build — generate temp project in _moonblox/, compile, assemble output
 pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
   guard @fs.path_exists(dir) else {
@@ -1394,6 +1344,7 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
   }
 
   let config = read_config(dir)
+  let theme_kind = @theme.resolve_theme(config.theme)
   let build_dir = "\{dir}/\{BUILD_DIR_NAME}"
 
   // Clean and recreate _moonblox/
@@ -1429,78 +1380,41 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
   let comp_callbacks = build_callback_map(build_dir)
   let all_generated_comps : Array[String] = []
 
-  // Per-page generation: collect front matter for list page
-  let posts : Array[PostMeta] = []
-  let posts_dir = "\{dir}/\{config.input}"
-  if @fs.path_exists(posts_dir) {
-    let files = @fs.read_dir(posts_dir)
-    for i = 0; i < files.length(); i = i + 1 {
-      let name = files[i]
-      if name.has_suffix(".md") {
-        try {
-          let content = @fs.read_file_to_string("\{posts_dir}/\{name}")
-          let slug = slug_from_filename(name)
-          // Process structured blocks before markdown → AST pipeline
-          let (processed_content, generated_comps) = process_structured_blocks(
-            content, build_dir, comp_callbacks,
-          )
-          for comp_name in generated_comps {
-            let mut already_have = false
-            for k = 0; k < all_generated_comps.length(); k = k + 1 {
-              if all_generated_comps[k] == comp_name {
-                already_have = true
-                break
-              }
-            }
-            if !already_have {
-              all_generated_comps.push(comp_name)
-            }
-          }
-          let page_dir = "\{build_dir}/\{PAGES_DIR}/\{slug}"
-          try! ensure_dir(page_dir)
-          generate_page_moon_pkg(build_dir, slug)
-          @fs.write_string_to_file(
-            "\{page_dir}/\{MAIN_MBT}",
-            generate_main_mbt(processed_content),
-          )
-          println("Generated: pages/\{slug}/")
-          let doc = @convert.parse_markdown(content)
-          let meta = doc.meta
-          posts.push(PostMeta::{
-            slug,
-            title: match meta.get("title") {
-              Some(t) => t
-              None => slug
-            },
-            date: match meta.get("date") {
-              Some(d) => d
-              None => ""
-            },
-            tags: match meta.get("tags") {
-              Some(t) => t
-              None => ""
-            },
-          })
-        } catch {
-          @fs.IOError(msg) => println("Warning: skipping '\{name}': \{msg}")
-          _ => println("Warning: skipping '\{name}': unexpected error")
+  // Discover all pages via theme
+  let pages = @theme.theme_discover_pages(theme_kind, "\{dir}/\{config.input}")
+  let pages = @theme.theme_sort_pages(theme_kind, pages)
+
+  // Per-page generation: process structured blocks and generate page files
+  for i = 0; i < pages.length(); i = i + 1 {
+    let page = pages[i]
+    let slug = page.slug
+    let content = page.content
+    // Process structured blocks before markdown → AST pipeline
+    let (processed_content, generated_comps) = process_structured_blocks(
+      content, build_dir, comp_callbacks,
+    )
+    for k = 0; k < generated_comps.length(); k = k + 1 {
+      let comp_name = generated_comps[k]
+      let mut already_have = false
+      for j = 0; j < all_generated_comps.length(); j = j + 1 {
+        if all_generated_comps[j] == comp_name {
+          already_have = true
+          break
         }
       }
+      if !already_have {
+        all_generated_comps.push(comp_name)
+      }
     }
+    let page_dir = "\{build_dir}/\{PAGES_DIR}/\{slug}"
+    try! ensure_dir(page_dir)
+    generate_page_moon_pkg(build_dir, slug)
+    @fs.write_string_to_file(
+      "\{page_dir}/\{MAIN_MBT}",
+      generate_main_mbt(processed_content),
+    )
+    println("Generated: pages/\{slug}/")
   }
-
-  // Sort posts by date descending for list page
-  posts.sort_by(fn(a, b) {
-    let da = date_to_sortable(a.date)
-    let db = date_to_sortable(b.date)
-    if da > db {
-      -1
-    } else if da < db {
-      1
-    } else {
-      0
-    }
-  })
 
   // Generate list page through the render pipeline
   let list_slug = "_listing"
@@ -1509,7 +1423,7 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
   generate_page_moon_pkg(build_dir, list_slug)
   @fs.write_string_to_file(
     "\{list_page_dir}/\{MAIN_MBT}",
-    generate_main_mbt(generate_list_page(posts)),
+    generate_main_mbt(@theme.theme_generate_listing_markdown(theme_kind, pages)),
   )
   println("Generated: pages/\{list_slug}/")
 
@@ -1521,8 +1435,35 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
     }
   }
 
-  // Collect CSS: base.css + component .css files
-  let css = collect_css(build_dir)
+  // Ensure theme component directories exist in build (copied from user's components)
+  let theme_dirs = @theme.theme_component_dirs(theme_kind)
+  for i = 0; i < theme_dirs.length(); i = i + 1 {
+    let dir_name = theme_dirs[i]
+    let dst_dir = "\{build_dir}/\{COMPONENTS_DIR}/\{dir_name}"
+    if !@fs.path_exists(dst_dir) {
+      let src_dir = "\{dir}/\{config.components}/\{dir_name}"
+      if @fs.path_exists(src_dir) && @fs.is_dir(src_dir) {
+        try {
+          @fs.create_dir(dst_dir)
+          for f in @fs.read_dir(src_dir) {
+            let src_file = "\{src_dir}/\{f}"
+            if !@fs.is_dir(src_file) {
+              @fs.write_string_to_file(
+                "\{dst_dir}/\{f}",
+                @fs.read_file_to_string(src_file),
+              )
+            }
+          }
+          println("Copied theme component: \{dir_name}/")
+        } catch {
+          _ => println("Warning: failed to copy theme component '\{dir_name}'")
+        }
+      }
+    }
+  }
+
+  // Collect CSS: theme CSS + component .css files
+  let css = collect_css(build_dir, @theme.theme_base_css(theme_kind))
 
   // Run moon check first — catches type errors early
   let check_result = @process.run(
@@ -1562,16 +1503,18 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
     let output_dir = js_dir
     let pages_dir = "\{output_dir}/\{PAGES_DIR}"
 
+    let page_shell = @theme.theme_page_shell_template(theme_kind)
     // Write per-page HTML shells alongside their JS files
-    for i = 0; i < posts.length(); i = i + 1 {
-      let slug = posts[i].slug
+    for i = 0; i < pages.length(); i = i + 1 {
+      let slug = pages[i].slug
+      let title = pages[i].metadata.get("title").unwrap_or(slug)
       let page_dir = "\{pages_dir}/\{slug}"
       try! ensure_dir(page_dir)
       let html = fill_template(
         page_shell,
-        posts[i].title,
+        title,
         slug,
-        build_meta_tags(posts[i]),
+        @theme.theme_build_meta_tags(theme_kind, pages[i]),
       ).replace_all(old="../style.css", new="../../style.css")
       @fs.write_string_to_file("\{page_dir}/\{INDEX_HTML}", html)
     }
@@ -1579,10 +1522,12 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
     // Write list page HTML
     let list_page_dir = "\{pages_dir}/_listing"
     try! ensure_dir(list_page_dir)
-    let list_html = fill_template(page_shell, "Articles", "index", "").replace_all(
-      old="../style.css",
-      new="../../style.css",
-    )
+    let list_html = fill_template(
+      page_shell,
+      @theme.theme_listing_page_title(theme_kind),
+      "index",
+      "",
+    ).replace_all(old="../style.css", new="../../style.css")
     @fs.write_string_to_file("\{list_page_dir}/\{INDEX_HTML}", list_html)
 
     // Copy _listing.js → index.js for list page (dev mode)
@@ -1611,9 +1556,11 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
     }
     try! @fs.create_dir(dist_dir)
 
+    let page_shell = @theme.theme_page_shell_template(theme_kind)
     // Copy per-page JS and generate HTML shells
-    for i = 0; i < posts.length(); i = i + 1 {
-      let slug = posts[i].slug
+    for i = 0; i < pages.length(); i = i + 1 {
+      let slug = pages[i].slug
+      let title = pages[i].metadata.get("title").unwrap_or(slug)
       let page_dist = "\{dist_dir}/\{slug}"
       try! ensure_dir(page_dist)
       // Copy JS
@@ -1628,9 +1575,9 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
       // Write page HTML shell with metadata
       let html = fill_template(
         page_shell,
-        posts[i].title,
+        title,
         slug,
-        build_meta_tags(posts[i]),
+        @theme.theme_build_meta_tags(theme_kind, pages[i]),
       )
       @fs.write_string_to_file("\{page_dist}/\{INDEX_HTML}", html)
     }
@@ -1644,10 +1591,12 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
       )
       println("Copied: index.js -> dist/")
     }
-    let list_html = fill_template(page_shell, "Articles", "index", "").replace_all(
-      old="../style.css",
-      new="style.css",
-    )
+    let list_html = fill_template(
+      page_shell,
+      @theme.theme_listing_page_title(theme_kind),
+      "index",
+      "",
+    ).replace_all(old="../style.css", new="style.css")
     @fs.write_string_to_file("\{dist_dir}/\{INDEX_HTML}", list_html)
 
     if css != "" {
@@ -1825,6 +1774,31 @@ fn copy_theme(src_root : String, build_dir : String) -> Unit raise {
 }
 
 ///|
+/// Check if a component source file has "children" as a function parameter
+/// (as opposed to a local variable declared with `let`).
+fn has_children_param(source : String) -> Bool {
+  match source.find("pub fn") {
+    None => false
+    Some(fn_start) => {
+      let after_fn = source[fn_start:]
+      match after_fn.find("(") {
+        None => false
+        Some(open_paren) => {
+          let after_open = after_fn[open_paren + 1:]
+          match after_open.find(")") {
+            None => false
+            Some(close_paren) => {
+              let params = after_open[0:close_paren].to_owned()
+              params.contains("children : Array[@rabbita.Html]")
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+///|
 /// Scan components/*/ subdirectories and generate _registry.mbt
 fn scan_components(dir : String, out_dir : String) -> Unit raise {
   guard @fs.path_exists(dir) else { return }
@@ -1842,10 +1816,8 @@ fn scan_components(dir : String, out_dir : String) -> Unit raise {
         match content.find(fn_marker) {
           None => continue
           Some(_) => {
-            // Detect container: check for "children : Array[@rabbita.Html]" in the source
-            let is_container = content.contains(
-              "children : Array[@rabbita.Html]",
-            )
+            // Detect container: check for "children : Array[@rabbita.Html]" in function params
+            let is_container = has_children_param(content)
             // Detect interactive: callback parameters must produce event Cmds.
             let has_callback = is_callback_type(content)
 
@@ -1903,19 +1875,12 @@ fn scan_components(dir : String, out_dir : String) -> Unit raise {
 }
 
 ///|
-/// Collect CSS: theme/base.css + component .css files
-fn collect_css(build_dir : String) -> String raise {
+/// Collect CSS: theme CSS + component .css files
+fn collect_css(build_dir : String, theme_css : String) -> String raise {
   let sb = StringBuilder::new()
-  if @fs.path_exists("\{build_dir}/\{THEME_DIR}/base.css") {
-    try {
-      sb.write_string(
-        @fs.read_file_to_string("\{build_dir}/\{THEME_DIR}/base.css"),
-      )
-      sb.write_char('\n')
-    } catch {
-      @fs.IOError(msg) =>
-        println("Warning: failed to read theme/base.css: \{msg}")
-    }
+  if theme_css != "" {
+    sb.write_string(theme_css)
+    sb.write_char('\n')
   }
   let comp_dir = "\{build_dir}/\{COMPONENTS_DIR}"
   if @fs.path_exists(comp_dir) {
@@ -2293,42 +2258,6 @@ fn capitalize(s : String) -> String {
   }
 }
 
-///|
-struct PostMeta {
-  slug : String
-  title : String
-  date : String
-  tags : String
-}
-
-///|
-/// Derive URL slug from filename by stripping .md extension
-fn slug_from_filename(filename : String) -> String {
-  if filename.has_suffix(".md") {
-    filename[0:filename.length() - 3].to_owned()
-  } else {
-    filename
-  }
-}
-
-///|
-/// Generate markdown for the article list page
-fn generate_list_page(posts : Array[PostMeta]) -> String {
-  let sb = StringBuilder::new()
-  sb.write_string("---\ntitle: Articles\n---\n\n")
-  for i = 0; i < posts.length(); i = i + 1 {
-    let p = posts[i]
-    if p.date != "" {
-      sb.write_string(
-        "- **[" + p.title + "](./" + p.slug + "/)** — " + p.date + "\n",
-      )
-    } else {
-      sb.write_string("- **[" + p.title + "](./" + p.slug + "/)**\n")
-    }
-  }
-  sb.to_string()
-}
-
 // --- Template helpers ---
 
 ///|
@@ -2343,19 +2272,6 @@ fn fill_template(
   .replace_all(old="__TITLE__", new=title)
   .replace_all(old="__SLUG__", new=slug)
   .replace_all(old="__META_TAGS__", new=meta_tags)
-}
-
-///|
-/// Build <meta> tag string from PostMeta for injection into page <head>
-fn build_meta_tags(post : PostMeta) -> String {
-  let sb = StringBuilder::new()
-  if post.date != "" {
-    sb.write_string("  <meta name=\"date\" content=\"\{post.date}\">\n")
-  }
-  if post.tags != "" {
-    sb.write_string("  <meta name=\"keywords\" content=\"\{post.tags}\">\n")
-  }
-  sb.to_string()
 }
 
 // --- Code generation ---

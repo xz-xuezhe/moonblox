@@ -51,13 +51,13 @@ fn today() -> String {
 fn do_scaffold(dir : String) -> Unit raise {
   mkdir(dir)
   mkdir("\{dir}/\{COMPONENTS_DIR}")
-  mkdir("\{dir}/\{POSTS_DIR}")
+  mkdir("\{dir}/posts")
   mkdir("\{dir}/\{THEME_DIR}")
 
   write(dir, "moonblox.json", default_config_json)
   let date = today()
   let post = sample_post_md.replace(old="__DATE__", new=date)
-  write(dir, "\{POSTS_DIR}/hello.md", post)
+  write(dir, "posts/hello.md", post)
   write(dir, "\{THEME_DIR}/base.css", base_css)
 
   scaffold_component(dir, "badge", badge_mbt, badge_css, badge_moon_pkg)
