@@ -166,6 +166,21 @@ enum ChangeType {
 }
 
 ///|
+fn has_removed_cache_entry(
+  old_entries : Map[String, Int],
+  current_entries : Map[String, Int],
+) -> Bool {
+  for entry in old_entries.iter() {
+    let (key, _) = entry
+    match current_entries.get(key) {
+      Some(_) => ()
+      None => return true
+    }
+  }
+  false
+}
+
+///|
 /// Compare current file state with cache and return what changed.
 fn detect_changes(
   dir : String,
@@ -250,6 +265,12 @@ fn detect_changes(
     }
   }
 
+  let removed_components = has_removed_cache_entry(
+    old.component_mtimes,
+    comp_hashes,
+  )
+  let removed_posts = has_removed_cache_entry(old.post_mtimes, post_hashes)
+
   // Update cache atomically
   cache.val = {
     post_mtimes: post_hashes,
@@ -264,6 +285,9 @@ fn detect_changes(
   }
   if old.theme_mtime != theme_h {
     return ChangeType::ThemeChanged
+  }
+  if removed_components || removed_posts {
+    return ChangeType::FullRebuild
   }
   if changed_comps.length() > 0 && changed_posts.length() > 0 {
     return ChangeType::FullRebuild

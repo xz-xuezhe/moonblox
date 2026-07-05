@@ -23,6 +23,26 @@ test "is_name_char: edge cases" {
 }
 
 ///|
+test "has_removed_cache_entry: detects missing old key" {
+  let old_entries : Map[String, Int] = Map([
+    ("posts/a.md", 1),
+    ("posts/b.md", 2),
+  ])
+  let current_entries : Map[String, Int] = Map([("posts/a.md", 1)])
+  assert_eq(has_removed_cache_entry(old_entries, current_entries), true)
+}
+
+///|
+test "has_removed_cache_entry: ignores changed and added keys" {
+  let old_entries : Map[String, Int] = Map([("posts/a.md", 1)])
+  let current_entries : Map[String, Int] = Map([
+    ("posts/a.md", 2),
+    ("posts/c.md", 3),
+  ])
+  assert_eq(has_removed_cache_entry(old_entries, current_entries), false)
+}
+
+///|
 test "is_numeric: basic" {
   assert_eq(is_numeric("123"), true)
   assert_eq(is_numeric("3.14"), true)
