@@ -156,6 +156,14 @@ test "render: strikethrough" {
   assert_eq(html.contains("<del>"), true)
 }
 
+///|
+test "render: inline html is escaped text" {
+  let doc = parse_simple("<script>alert(1)</script>")
+  let html = render_doc(doc)
+  assert_eq(html.contains("<script>"), false)
+  assert_eq(html.contains("alert(1)"), true)
+}
+
 // --- Front matter ---
 
 ///|

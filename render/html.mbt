@@ -56,10 +56,7 @@ fn md_inline_to_html(inline : @markdown.Inline) -> @rabbita.Html {
       let href = if is_email { "mailto:" + url } else { url }
       @html.a(href~, [@html.text(url)])
     }
-    @markdown.Inline::HtmlInline(html~, ..) => {
-      let empty : Array[@rabbita.Html] = []
-      @html.span(attrs=@html.Attrs::build().inner_html(html), empty)
-    }
+    @markdown.Inline::HtmlInline(html~, ..) => @html.text(html)
     @markdown.Inline::WikiLink(target~, label~, fragment~, ..) => {
       let href = if fragment == "" { target } else { target + "#" + fragment }
       let text = if label == "" { href } else { label }
