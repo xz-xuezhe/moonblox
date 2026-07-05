@@ -18,7 +18,9 @@ pub fn scaffold(
 
 ///|
 fn mkdir(path : String, quiet : Bool) -> Unit raise {
-  if !quiet { println("  mkdir \{path}") }
+  if !quiet {
+    println("  mkdir \{path}")
+  }
   if @fs.path_exists(path) {
     if @fs.is_dir(path) {
       return // already exists as a directory — idempotent
@@ -29,9 +31,16 @@ fn mkdir(path : String, quiet : Bool) -> Unit raise {
 }
 
 ///|
-fn write(dir : String, name : String, content : String, quiet : Bool) -> Unit raise {
+fn write(
+  dir : String,
+  name : String,
+  content : String,
+  quiet : Bool,
+) -> Unit raise {
   let path = "\{dir}/\{name}"
-  if !quiet { println("  write \{path}") }
+  if !quiet {
+    println("  write \{path}")
+  }
   @fs.write_string_to_file(path, content) // propagates error to caller (do_scaffold)
 }
 
@@ -93,7 +102,9 @@ fn do_scaffold(
     let name = components[i]
     match name {
       "badge" =>
-        scaffold_component(dir, "badge", badge_mbt, badge_css, badge_moon_pkg, quiet)
+        scaffold_component(
+          dir, "badge", badge_mbt, badge_css, badge_moon_pkg, quiet,
+        )
       "counter" =>
         scaffold_component(
           dir, "counter", counter_mbt, counter_css, counter_moon_pkg, quiet,
@@ -103,24 +114,33 @@ fn do_scaffold(
           dir, "callout", callout_mbt, callout_css, callout_moon_pkg, quiet,
         )
       "card" =>
-        scaffold_component(dir, "card", card_mbt, card_css, card_moon_pkg, quiet)
+        scaffold_component(
+          dir, "card", card_mbt, card_css, card_moon_pkg, quiet,
+        )
       "grid" =>
-        scaffold_component(dir, "grid", grid_mbt, grid_css, grid_moon_pkg, quiet)
+        scaffold_component(
+          dir, "grid", grid_mbt, grid_css, grid_moon_pkg, quiet,
+        )
       "metric" =>
         scaffold_component(
           dir, "metric", metric_mbt, metric_css, metric_moon_pkg, quiet,
         )
       "chart" =>
-        scaffold_component(dir, "chart", chart_mbt, chart_css, chart_moon_pkg, quiet)
+        scaffold_component(
+          dir, "chart", chart_mbt, chart_css, chart_moon_pkg, quiet,
+        )
       "graph" =>
-        scaffold_component(dir, "graph", graph_mbt, graph_css, graph_moon_pkg, quiet)
+        scaffold_component(
+          dir, "graph", graph_mbt, graph_css, graph_moon_pkg, quiet,
+        )
       "sidebar" =>
         scaffold_component(
           dir, "sidebar", sidebar_mbt, sidebar_css, sidebar_moon_pkg, quiet,
         )
       "breadcrumbs" =>
         scaffold_component(
-          dir, "breadcrumbs", breadcrumbs_mbt, breadcrumbs_css, breadcrumbs_moon_pkg, quiet,
+          dir, "breadcrumbs", breadcrumbs_mbt, breadcrumbs_css, breadcrumbs_moon_pkg,
+          quiet,
         )
       "prev_next" =>
         scaffold_component(
@@ -130,7 +150,9 @@ fn do_scaffold(
     }
   }
 
-  if !quiet { println("Created MoonBlox site at \{dir}/") }
+  if !quiet {
+    println("Created MoonBlox site at \{dir}/")
+  }
   if !quiet {
     if theme == "docs" {
       println("  cd \{dir}/docs && moonblox build")

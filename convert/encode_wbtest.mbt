@@ -52,12 +52,18 @@ test "is_name_start: basic" {
 
 ///|
 test "encode_directives: skip single backtick code span" {
-  assert_eq(encode_directives("use `@name(x: 1)` here"), "use `@name(x: 1)` here")
+  assert_eq(
+    encode_directives("use `@name(x: 1)` here"),
+    "use `@name(x: 1)` here",
+  )
 }
 
 ///|
 test "encode_directives: skip double backtick code span" {
-  assert_eq(encode_directives("use ``@name(x: 1)`` here"), "use ``@name(x: 1)`` here")
+  assert_eq(
+    encode_directives("use ``@name(x: 1)`` here"),
+    "use ``@name(x: 1)`` here",
+  )
 }
 
 ///|

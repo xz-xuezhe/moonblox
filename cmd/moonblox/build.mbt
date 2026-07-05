@@ -1417,15 +1417,18 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
   }
 
   // Generate list page through the render pipeline
+  let listing_md = @theme.theme_generate_listing_markdown(theme_kind, pages)
   let list_slug = "_listing"
   let list_page_dir = "\{build_dir}/\{PAGES_DIR}/\{list_slug}"
-  try! ensure_dir(list_page_dir)
-  generate_page_moon_pkg(build_dir, list_slug)
-  @fs.write_string_to_file(
-    "\{list_page_dir}/\{MAIN_MBT}",
-    generate_main_mbt(@theme.theme_generate_listing_markdown(theme_kind, pages)),
-  )
-  println("Generated: pages/\{list_slug}/")
+  if listing_md != "" {
+    try! ensure_dir(list_page_dir)
+    generate_page_moon_pkg(build_dir, list_slug)
+    @fs.write_string_to_file(
+      "\{list_page_dir}/\{MAIN_MBT}",
+      generate_main_mbt(listing_md),
+    )
+    println("Generated: pages/\{list_slug}/")
+  }
 
   // Add composite cell entries to registry
   if all_generated_comps.length() > 0 {
@@ -1521,26 +1524,34 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
       @fs.write_string_to_file("\{page_dir}/\{INDEX_HTML}", html)
     }
 
-    // Write list page HTML
-    let list_page_dir = "\{pages_dir}/_listing"
-    try! ensure_dir(list_page_dir)
-    let list_nav_html = @theme.theme_generate_nav_html(theme_kind, pages, "_listing")
-    let list_html = fill_template(
-      page_shell,
-      @theme.theme_listing_page_title(theme_kind),
-      "index",
-      "",
-      list_nav_html,
-    ).replace_all(old="../style.css", new="../../style.css")
-    @fs.write_string_to_file("\{list_page_dir}/\{INDEX_HTML}", list_html)
-
-    // Copy _listing.js → index.js for list page (dev mode)
-    let list_js_src = "\{js_dir}/\{PAGES_DIR}/_listing/_listing.js"
-    if @fs.path_exists(list_js_src) {
-      @fs.write_string_to_file(
-        "\{output_dir}/index.js",
-        @fs.read_file_to_string(list_js_src),
+    // Write list page HTML (or redirect for docs theme)
+    if listing_md == "" {
+      // Write redirect index.html at root
+      let redirect = "<!DOCTYPE html>\n<html>\n<head>\n<meta http-equiv=\"refresh\" content=\"0;url=./index/\">\n</head>\n<body></body>\n</html>\n"
+      @fs.write_string_to_file("\{output_dir}/\{INDEX_HTML}", redirect)
+    } else {
+      let list_page_dir = "\{pages_dir}/_listing"
+      try! ensure_dir(list_page_dir)
+      let list_nav_html = @theme.theme_generate_nav_html(
+        theme_kind, pages, "_listing",
       )
+      let list_html = fill_template(
+        page_shell,
+        @theme.theme_listing_page_title(theme_kind),
+        "index",
+        "",
+        list_nav_html,
+      ).replace_all(old="../style.css", new="../../style.css")
+      @fs.write_string_to_file("\{list_page_dir}/\{INDEX_HTML}", list_html)
+
+      // Copy _listing.js → index.js for list page (dev mode)
+      let list_js_src = "\{js_dir}/\{PAGES_DIR}/_listing/_listing.js"
+      if @fs.path_exists(list_js_src) {
+        @fs.write_string_to_file(
+          "\{output_dir}/index.js",
+          @fs.read_file_to_string(list_js_src),
+        )
+      }
     }
 
     // Write CSS to build output root
@@ -1589,23 +1600,31 @@ pub async fn build(dir : String, dev_mode? : Bool = false) -> Bool {
     }
 
     // Handle list page (slug "_listing") — copy JS and write HTML to dist root
-    let list_js_src = "\{js_dir}/\{PAGES_DIR}/_listing/_listing.js"
-    if @fs.path_exists(list_js_src) {
-      @fs.write_string_to_file(
-        "\{dist_dir}/index.js",
-        @fs.read_file_to_string(list_js_src),
+    if listing_md == "" {
+      // Write redirect index.html at root for docs theme
+      let redirect = "<!DOCTYPE html>\n<html>\n<head>\n<meta http-equiv=\"refresh\" content=\"0;url=./index/\">\n</head>\n<body></body>\n</html>\n"
+      @fs.write_string_to_file("\{dist_dir}/\{INDEX_HTML}", redirect)
+    } else {
+      let list_js_src = "\{js_dir}/\{PAGES_DIR}/_listing/_listing.js"
+      if @fs.path_exists(list_js_src) {
+        @fs.write_string_to_file(
+          "\{dist_dir}/index.js",
+          @fs.read_file_to_string(list_js_src),
+        )
+        println("Copied: index.js -> dist/")
+      }
+      let list_nav_html = @theme.theme_generate_nav_html(
+        theme_kind, pages, "_listing",
       )
-      println("Copied: index.js -> dist/")
+      let list_html = fill_template(
+        page_shell,
+        @theme.theme_listing_page_title(theme_kind),
+        "index",
+        "",
+        list_nav_html,
+      ).replace_all(old="../style.css", new="style.css")
+      @fs.write_string_to_file("\{dist_dir}/\{INDEX_HTML}", list_html)
     }
-    let list_nav_html = @theme.theme_generate_nav_html(theme_kind, pages, "_listing")
-    let list_html = fill_template(
-      page_shell,
-      @theme.theme_listing_page_title(theme_kind),
-      "index",
-      "",
-      list_nav_html,
-    ).replace_all(old="../style.css", new="style.css")
-    @fs.write_string_to_file("\{dist_dir}/\{INDEX_HTML}", list_html)
 
     if css != "" {
       @fs.write_string_to_file("\{dist_dir}/\{STYLE_CSS}", css) catch {

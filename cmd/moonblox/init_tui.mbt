@@ -162,20 +162,29 @@ fn update(
               selected_comps.push(names[i])
             }
           }
-          scaffold(name, theme=theme_name, components=selected_comps, quiet=true)
+          scaffold(
+            name,
+            theme=theme_name,
+            components=selected_comps,
+            quiet=true,
+          )
           result.val = Some(name)
           (@tui.Cmd::quit(), model)
         }
         Dir => {
           let name = dir_value(model)
           if name == "" {
-            (@tui.Cmd::none(), { ..model, status: "Please enter a project name" })
+            (
+              @tui.Cmd::none(),
+              { ..model, status: "Please enter a project name" },
+            )
           } else {
             (@tui.Cmd::none(), { ..model, step: next_step(model.step) })
           }
         }
         Theme => (@tui.Cmd::none(), { ..model, step: next_step(model.step) })
-        Components => (@tui.Cmd::none(), { ..model, step: next_step(model.step) })
+        Components =>
+          (@tui.Cmd::none(), { ..model, step: next_step(model.step) })
       }
     KeyPressed(@tui.Key::Up) =>
       (

@@ -145,14 +145,14 @@ impl Theme for BlogTheme with fn generate_listing_markdown(
         "**[" + title + "](./" + page.slug + "/)** — " + date_str + "\n\n",
       )
     } else {
-        sb.write_string("**[" + title + "](./" + page.slug + "/)**\n\n")
+      sb.write_string("**[" + title + "](./" + page.slug + "/)**\n\n")
     }
   }
   sb.to_string()
 }
 
 ///|
-impl Theme for BlogTheme with generate_nav_html(
+impl Theme for BlogTheme with fn generate_nav_html(
   self,
   _pages : Array[PageEntry],
   _current_slug : String,
@@ -213,6 +213,23 @@ impl Theme for BlogTheme with fn base_css(self) -> String {
     #|  padding: 0;
     #|}
     #|
+    #|table {
+    #|  width: 100%;
+    #|  border-collapse: collapse;
+    #|  margin: 1rem 0;
+    #|}
+    #|
+    #|th, td {
+    #|  text-align: left;
+    #|  padding: 0.5rem 0.75rem;
+    #|  border: 1px solid #e2e8f0;
+    #|}
+    #|
+    #|th {
+    #|  background: #f8fafc;
+    #|  font-weight: 600;
+    #|}
+    #|
   )
 }
 
@@ -226,11 +243,15 @@ impl Theme for BlogTheme with fn build_meta_tags(self, page : PageEntry) -> Stri
   let sb = StringBuilder::new()
   let date = page.metadata.get("date").unwrap_or("")
   if date != "" {
-    sb.write_string("  <meta name=\"date\" content=\"" + html_escape(date) + "\">\n")
+    sb.write_string(
+      "  <meta name=\"date\" content=\"" + html_escape(date) + "\">\n",
+    )
   }
   let tags = page.metadata.get("tags").unwrap_or("")
   if tags != "" {
-    sb.write_string("  <meta name=\"keywords\" content=\"" + html_escape(tags) + "\">\n")
+    sb.write_string(
+      "  <meta name=\"keywords\" content=\"" + html_escape(tags) + "\">\n",
+    )
   }
   sb.to_string()
 }

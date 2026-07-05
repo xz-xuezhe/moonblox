@@ -67,7 +67,7 @@ pub(open) trait Theme {
   /// Generate HTML for sidebar/breadcrumb navigation.
   /// `current_slug` identifies the active page (for highlighting).
   /// Return empty string if the theme has no navigation.
-  generate_nav_html(Self, pages : Array[PageEntry], current_slug : String) -> String
+  fn generate_nav_html(Self, pages : Array[PageEntry], current_slug : String) -> String
 
   /// Generate HTML meta tags from page metadata (e.g., date, keywords, description).
   fn build_meta_tags(Self, page : PageEntry) -> String

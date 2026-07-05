@@ -123,21 +123,14 @@ impl Theme for DocsTheme with fn listing_page_title(self) -> String {
 ///|
 impl Theme for DocsTheme with fn generate_listing_markdown(
   self,
-  pages : Array[PageEntry],
+  _pages : Array[PageEntry],
 ) -> String {
-  let sb = StringBuilder::new()
-  sb.write_string("---\ntitle: Documentation\n---\n\n")
-  sb.write_string("Welcome to the documentation.\n\n")
-  for i = 0; i < pages.length(); i = i + 1 {
-    let page = pages[i]
-    let title = page.metadata.get("title").unwrap_or(page.slug)
-    sb.write_string("[" + title + "](./" + page.slug + "/)\n\n")
-  }
-  sb.to_string()
+  // Docs theme uses sidebar navigation, not a listing page
+  ""
 }
 
 ///|
-impl Theme for DocsTheme with generate_nav_html(
+impl Theme for DocsTheme with fn generate_nav_html(
   self,
   pages : Array[PageEntry],
   current_slug : String,
@@ -150,12 +143,22 @@ impl Theme for DocsTheme with generate_nav_html(
     // Determine link prefix: listing page is at root, content pages are one level deep
     let prefix = if current_slug == "_listing" { "" } else { "../" }
     let url = if page.slug == "index" {
-      if current_slug == "_listing" { "./" } else { "../" }
+      if current_slug == "_listing" {
+        "./"
+      } else {
+        "../"
+      }
     } else {
       prefix + page.slug + "/"
     }
-    let active = if page.slug == current_slug { " class=\"active\"" } else { "" }
-    sb.write_string("      <a href=\"" + url + "\"" + active + ">" + title + "</a>\n")
+    let active = if page.slug == current_slug {
+      " class=\"active\""
+    } else {
+      ""
+    }
+    sb.write_string(
+      "      <a href=\"" + url + "\"" + active + ">" + title + "</a>\n",
+    )
   }
   sb.to_string()
 }
@@ -264,6 +267,23 @@ impl Theme for DocsTheme with fn base_css(self) -> String {
     #|  padding: 0;
     #|}
     #|
+    #|table {
+    #|  width: 100%;
+    #|  border-collapse: collapse;
+    #|  margin: 1rem 0;
+    #|}
+    #|
+    #|th, td {
+    #|  text-align: left;
+    #|  padding: 0.5rem 0.75rem;
+    #|  border: 1px solid #e2e8f0;
+    #|}
+    #|
+    #|th {
+    #|  background: #f8fafc;
+    #|  font-weight: 600;
+    #|}
+    #|
   )
 }
 
@@ -280,7 +300,9 @@ impl Theme for DocsTheme with fn build_meta_tags(self, page : PageEntry) -> Stri
   let description = page.metadata.get("description").unwrap_or("")
   if description != "" {
     sb.write_string(
-      "  <meta name=\"description\" content=\"" + html_escape(description) + "\">\n",
+      "  <meta name=\"description\" content=\"" +
+      html_escape(description) +
+      "\">\n",
     )
   }
   sb.to_string()

@@ -222,6 +222,83 @@ fn render_container(
 }
 
 ///|
+/// Strip leading list marker ("- ", "* ", "1. ", etc.) from an inline array.
+fn strip_list_marker(inlines : Array[@ast.Inline]) -> Array[@ast.Inline] {
+  if inlines.length() == 0 {
+    return inlines
+  }
+  match inlines[0] {
+    @ast.Inline::Markdown(@markdown.Inline::Text(content~, span~)) => {
+      let trimmed = content.trim_start()
+      let is_bullet = trimmed.has_prefix("- ") ||
+        trimmed.has_prefix("* ") ||
+        trimmed.has_prefix("+ ")
+      let is_ordered = trimmed.length() >= 2 &&
+        trimmed.get_char(0) is Some(c) &&
+        c >= '0' &&
+        c <= '9' &&
+        trimmed.get_char(1) is Some('.') &&
+        (trimmed.length() == 2 || trimmed.get_char(2) is Some(' '))
+      if is_bullet {
+        let new_content = trimmed[2:].to_owned()
+        let result : Array[@ast.Inline] = [
+          @ast.Inline::Markdown(
+            @markdown.Inline::Text(content=new_content, span~),
+          ),
+        ]
+        for k = 1; k < inlines.length(); k = k + 1 {
+          result.push(inlines[k])
+        }
+        result
+      } else if is_ordered {
+        let dot_pos = 2
+        let after_dot = if trimmed.length() > dot_pos &&
+          trimmed.get_char(dot_pos) is Some(' ') {
+          dot_pos + 1
+        } else {
+          dot_pos
+        }
+        let new_content = trimmed[after_dot:].to_owned()
+        let result : Array[@ast.Inline] = [
+          @ast.Inline::Markdown(
+            @markdown.Inline::Text(content=new_content, span~),
+          ),
+        ]
+        for k = 1; k < inlines.length(); k = k + 1 {
+          result.push(inlines[k])
+        }
+        result
+      } else {
+        inlines
+      }
+    }
+    _ => inlines
+  }
+}
+
+///|
+/// Strip leading list marker from the first paragraph in a block array.
+fn strip_first_paragraph_marker(
+  blocks : Array[@ast.Block],
+) -> Array[@ast.Block] {
+  if blocks.length() == 0 {
+    return blocks
+  }
+  let result : Array[@ast.Block] = []
+  match blocks[0] {
+    @ast.Block::Paragraph(p) => {
+      let stripped = strip_list_marker(p.children)
+      result.push(@ast.Block::Paragraph({ children: stripped }))
+    }
+    _ => result.push(blocks[0])
+  }
+  for k = 1; k < blocks.length(); k = k + 1 {
+    result.push(blocks[k])
+  }
+  result
+}
+
+///|
 fn render_list(
   lst : @ast.BlockList,
   inline_cells : Map[String, (Map[String, @ast.Value]) -> @rabbita.Cell],
@@ -233,10 +310,11 @@ fn render_list(
   let items : Array[@rabbita.Html] = []
   for i = 0; i < lst.items.length(); i = i + 1 {
     let item = lst.items[i]
+    let stripped_children = strip_first_paragraph_marker(item.children)
     let kids : Array[@rabbita.Html] = []
-    for j = 0; j < item.children.length(); j = j + 1 {
+    for j = 0; j < stripped_children.length(); j = j + 1 {
       kids.push(
-        render_block(item.children[j], inline_cells, container_cells).view(),
+        render_block(stripped_children[j], inline_cells, container_cells).view(),
       )
     }
     items.push(@html.li(kids))
@@ -262,10 +340,13 @@ pub fn render_document(
   ] = Map([]),
 ) -> @rabbita.Cell {
   let children : Array[@rabbita.Html] = []
+  let mut injected_title = false
   // Inject title from front matter
   match doc.meta.get("title") {
-    Some(title) =>
+    Some(title) => {
       children.push(@html.h1(class="page-title", [@html.text(title)]))
+      injected_title = true
+    }
     None => ()
   }
   // Inject date from front matter
@@ -276,8 +357,14 @@ pub fn render_document(
       )
     None => ()
   }
-  // Render document blocks
+  // Render document blocks, skipping first h1 if already injected from front matter
   for i = 0; i < doc.children.length(); i = i + 1 {
+    if injected_title && i == 0 {
+      match doc.children[0] {
+        @ast.Block::Heading(h) if h.level == 1 => continue
+        _ => ()
+      }
+    }
     let cell = render_block(doc.children[i], inline_cells, container_cells)
     children.push(cell.view())
   }

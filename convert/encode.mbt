@@ -107,17 +107,19 @@ fn skip_code_span(text : String, start : Int) -> Int {
     if text.get_char(pos) == Some('`') {
       let mut found = 0
       let mut check = pos
-      while check < text.length() && text.get_char(check) == Some('`') && found < tick_count {
+      while check < text.length() &&
+            text.get_char(check) == Some('`') &&
+            found < tick_count {
         found = found + 1
         check = check + 1
       }
       if found == tick_count {
-        return check  // position after closing backticks
+        return check // position after closing backticks
       }
     }
     pos = pos + 1
   }
-  text.length()  // unmatched — treat rest as code span
+  text.length() // unmatched — treat rest as code span
 }
 
 ///|

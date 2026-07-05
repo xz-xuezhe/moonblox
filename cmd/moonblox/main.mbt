@@ -59,19 +59,18 @@ async fn main {
             ""
           }
           let default_dir = if dir == "" || dir == "." { "" } else { dir }
-          match init_tui(default_dir=default_dir) {
+          match init_tui(default_dir~) {
             Some(name) => {
               println("Created MoonBlox site at \{name}/")
               println("  cd \{name} && moonblox serve")
             }
-            None => {
+            None =>
               // TUI failed (non-TTY or error) — fall back to direct scaffold if dir provided
               if dir != "" && dir != "." {
                 scaffold(dir, theme="blog")
                 println("Created MoonBlox site at \{dir}/")
                 println("  cd \{dir} && moonblox serve")
               }
-            }
           }
         }
         "build" => {

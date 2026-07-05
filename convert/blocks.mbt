@@ -193,7 +193,11 @@ fn convert_block(block : @markdown.Block, source : String) -> Array[@ast.Block] 
     @markdown.Block::BlankLines(..) => []
     @markdown.Block::Table(header~, alignments~, rows~, ..) => {
       fn convert_table_cell(cell : @markdown.TableCell) -> @ast.BlockTableCell {
-        { children: parse_span_inlines(source, cell.span) }
+        {
+          children: cell.children.map(fn(inline) {
+            @ast.Inline::Markdown(inline)
+          }),
+        }
       }
       [
         @ast.Block::Table({
