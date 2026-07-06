@@ -90,11 +90,16 @@ the shared model.
 
 ## Dependencies
 
-- [rabbita](https://github.com/moonbit-community/rabbita) — UI framework
+### Core library
+- [moonbit-community/rabbita](https://github.com/moonbit-community/rabbita) — UI framework
 - [mizchi/markdown](https://github.com/mizchi/markdown) — Markdown parser
 - [moonbitlang/x](https://github.com/moonbitlang/x) — filesystem utilities
+- [TheWaWaR/clap](https://github.com/TheWaWaR/clap) — CLI argument parsing
+- [moonbitlang/yacc](https://github.com/moonbitlang/yacc) — parser generator (build dependency)
+
+### CLI (additional)
 - [moonbitlang/async](https://github.com/moonbitlang/core) — async runtime
-- [Yoorkin/ArgParser](https://github.com/Yoorkin/ArgParser) — CLI argument parsing
+- [moonbit-community/rabbita_tui](https://github.com/moonbit-community/rabbita_tui) — terminal UI
 
 ## CLI Commands
 
