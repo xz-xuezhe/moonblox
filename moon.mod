@@ -1,6 +1,6 @@
 name = "xz-xuezhe/moonblox"
 
-version = "0.1.0"
+version = "0.2.0"
 
 supported_targets = "js+native"
 

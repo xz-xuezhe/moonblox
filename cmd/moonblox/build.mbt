@@ -69,7 +69,7 @@ const RABBITA_PACKAGE : String = "moonbit-community/rabbita"
 const MARKDOWN_PACKAGE : String = "mizchi/markdown"
 
 ///|
-const ENGINE_VERSION : String = "0.1.0"
+const ENGINE_VERSION : String = "0.2.0"
 
 ///|
 const MOUNT_ID : String = "app"
