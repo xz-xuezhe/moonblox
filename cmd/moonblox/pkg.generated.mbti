@@ -2,17 +2,55 @@
 package "xz-xuezhe/moonblox-cli"
 
 import {
+  "mizchi/markdown",
   "moonbitlang/core/debug",
+  "xz-xuezhe/moonblox/ast",
 }
 
 // Values
 pub async fn build(String, dev_mode? : Bool) -> Bool
 
-pub fn generate_main_mbt(String) -> String
+pub fn double_to_string(Double) -> String
+
+pub fn escape_string(String) -> String
+
+pub fn generate_main_mbt(@ast.Document) -> String
+
+pub fn indent_str(Int) -> String
 
 pub async fn init_tui(default_dir? : String) -> String?
 
 pub fn scaffold(String, theme? : String, components? : Array[String], quiet? : Bool, empty? : Bool) -> Result[Unit, String]
+
+pub fn serialize_align(@markdown.TableAlign) -> String
+
+pub fn serialize_block(@ast.Block, Int) -> String
+
+pub fn serialize_blocks(Array[@ast.Block], Int) -> String
+
+pub fn serialize_cell(@ast.BlockTableCell, Int) -> String
+
+pub fn serialize_document(@ast.Document) -> String
+
+pub fn serialize_emphasis(@markdown.EmphasisMarker) -> String
+
+pub fn serialize_hardbreak(@markdown.HardBreakStyle) -> String
+
+pub fn serialize_inline(@ast.Inline, Int) -> String
+
+pub fn serialize_inlines(Array[@ast.Inline], Int) -> String
+
+pub fn serialize_list_item(@ast.ListItem, Int) -> String
+
+pub fn serialize_md_inlines(Array[@markdown.Inline], Int) -> String
+
+pub fn serialize_span(@markdown.Span) -> String
+
+pub fn serialize_string_map(Map[String, String], Int) -> String
+
+pub fn serialize_value(@ast.Value, Int) -> String
+
+pub fn serialize_value_map(Map[String, @ast.Value], Int) -> String
 
 pub async fn serve(String, Int) -> Unit
 

@@ -9,6 +9,7 @@ import {
   "TheWaWaR/clap@0.2.6",
   "moonbit-community/rabbita@0.12.4",
   "moonbit-community/rabbita_tui@0.1.0",
+  "mizchi/markdown@0.6.2",
 }
 
 preferred_target = "native"

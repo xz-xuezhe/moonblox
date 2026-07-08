@@ -12,7 +12,10 @@ import {
   "TheWaWaR/clap",
   "moonbit-community/rabbita_tui" @tui,
   "moonbit-community/rabbita_tui/widgets",
+  "mizchi/markdown",
   "moonbitlang/core/immut/vector",
+  "xz-xuezhe/moonblox/ast",
+  "xz-xuezhe/moonblox/convert",
   "xz-xuezhe/moonblox/theme",
   "xz-xuezhe/moonblox-cli/embed",
 }
