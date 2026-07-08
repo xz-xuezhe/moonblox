@@ -10,7 +10,6 @@ import {
   "mizchi/markdown@0.6.2",
   "moonbitlang/x@0.4.45",
   "moonbit-community/rabbita@0.12.4",
-  "TheWaWaR/clap@0.2.6",
 }
 
 readme = "README.md"

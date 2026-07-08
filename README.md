@@ -1,15 +1,43 @@
-<div align="center">
-  <h1>MoonBlox</h1>
-  <p><em>Write Markdown. Embed MoonBit components. Ship interactive pages.</em></p>
-</div>
+# MoonBlox
 
+*A Markdown-first programmable site generator powered by MoonBit.*
+
+Write Markdown, embed interactive MoonBit components, and `moonblox-cli build`
+outputs a static site.
+
+## Try It
+
+See a live demo of components sharing state:
+**[Component Interaction Playground](https://xz-xuezhe.github.io/moonblox/component-interaction/)**
+
+## Quick Start
+
+Requires the [MoonBit](https://www.moonbitlang.com/download/) toolchain.
+
+```bash
+moon install xz-xuezhe/moonblox-cli
+moonblox-cli init my-site
+cd my-site
+moonblox-cli serve        # dev server with live reload
+moonblox-cli build        # production build
 ```
+
+Open `http://localhost:3000`. Edit any Markdown file — the browser reloads
+automatically.
+
+## Examples
+
+```md
+---
+title: Hello MoonBlox
+date: 2025-01-15
+tags: [demo]
+---
+
 @badge(text: "new", tone: "info")
 
-@counter(value: 0)
-
 :::callout(type: "note", title: "Tip")
-Your Markdown content here.
+Regular **Markdown** content here.
 :::
 
 ::score_panel { count = 0 }
@@ -19,93 +47,18 @@ Your Markdown content here.
 ::
 ```
 
-## Features
-
-- **Front matter**: YAML metadata (title, date, tags) rendered in page output
-- **Tables**: Markdown table support with alignment
-- **8 built-in components**: badge, counter, callout, card, grid, metric, chart, graph
-- **Configuration**: `moonblox.json` for custom input/output/component paths
-- **Live reload**: `moonblox-cli serve` with file watcher and WebSocket reload
-- **Incremental builds**: Dev server skips unchanged files, uses debug builds
-
-## Quick Start
-
-Requires [MoonBit](https://www.moonbitlang.com/download/) toolchain.
-
-```bash
-moon install xz-xuezhe/moonblox-cli
-```
-
-```bash
-moonblox-cli init my-site
-cd my-site
-moonblox-cli serve        # dev server with live reload
-moonblox-cli build        # production build
-```
+- **Inline** `@name(args)` — embed a component anywhere in a line
+- **Container** `:::name(args)` — wrap Markdown content in a component
+- **Structured block** `::name { model } body ::` — share state across multiple components
 
 ## Documentation
 
-Read the full documentation at <https://xz-xuezhe.github.io/moonblox/>.
+Full docs at **[xz-xuezhe.github.io/moonblox](https://xz-xuezhe.github.io/moonblox/)**:
 
-## Project Structure
-
-```
-my-site/
-  posts/index.md           # your Markdown content
-  components/        — your components (8 built-in: badge, counter, callout, card, grid, metric, chart, graph)
-  theme/base.css           # global styles
-  dist/                    # built output
-```
-
-## Components
-
-Use built-in or project-local components directly from Markdown:
-
-```md
-@badge(text: "stable", tone: "success")
-
-:::callout(type: "note", title: "Tip")
-Markdown content can live inside container components.
-:::
-```
-
-For custom component authoring and the MoonBit interface details, see
-<https://xz-xuezhe.github.io/moonblox/components/>.
-
-### Structured Block Syntax
-
-Use `::name { model } body ::` to share state between components:
-
-```md
-::dashboard { count = 0 }
-  @metric(value=count, label="Clicks")
-  @chart(value=count, max=10, label="Progress")
-  @counter(value=count)
-::
-```
-
-Here, `counter` updates `count`; `metric` and `chart` read the same value and
-re-render when it changes. Interactive components auto-wire callbacks to update
-the shared model.
-
-## Dependencies
-
-### Core library
-- [moonbit-community/rabbita](https://github.com/moonbit-community/rabbita) — UI framework
-- [mizchi/markdown](https://github.com/mizchi/markdown) — Markdown parser
-- [moonbitlang/x](https://github.com/moonbitlang/x) — filesystem utilities
-- [TheWaWaR/clap](https://github.com/TheWaWaR/clap) — CLI argument parsing
-- [moonbitlang/yacc](https://github.com/moonbitlang/yacc) — parser generator (build dependency)
-
-### CLI (additional)
-- [moonbitlang/async](https://github.com/moonbitlang/core) — async runtime
-- [moonbit-community/rabbita_tui](https://github.com/moonbit-community/rabbita_tui) — terminal UI
-
-## CLI Commands
-
-- `moonblox-cli init <dir>` — scaffold a new project
-- `moonblox-cli build <dir>` — build static site to dist/
-- `moonblox-cli serve <dir> [--port 3000]` — start dev server with live reload
+- [Getting Started](https://xz-xuezhe.github.io/moonblox/getting-started/)
+- [Syntax Reference](https://xz-xuezhe.github.io/moonblox/syntax/)
+- [Components](https://xz-xuezhe.github.io/moonblox/components/)
+- [Configuration](https://xz-xuezhe.github.io/moonblox/configuration/)
 
 ## License
 

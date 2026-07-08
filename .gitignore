@@ -6,8 +6,6 @@ _build/
 # MoonBit
 .moon/
 .mooncakes/
-# Generated
-parser/parser.mbt.map.json
 
 # Test artifacts
 .playwright-cli/
