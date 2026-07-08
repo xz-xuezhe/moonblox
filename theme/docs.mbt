@@ -12,12 +12,12 @@ pub fn new_docs() -> DocsTheme {
 }
 
 ///|
-impl Theme for DocsTheme with fn content_root(self) -> String {
+impl Theme for DocsTheme with fn content_root(_self) -> String {
   "docs"
 }
 
 ///|
-impl Theme for DocsTheme with fn discover_pages(self, content_dir : String) -> Array[
+impl Theme for DocsTheme with fn discover_pages(_self, content_dir : String) -> Array[
   PageEntry,
 ] {
   let entries : Array[PageEntry] = []
@@ -76,7 +76,7 @@ impl Theme for DocsTheme with fn discover_pages(self, content_dir : String) -> A
 }
 
 ///|
-impl Theme for DocsTheme with fn sort_pages(self, pages : Array[PageEntry]) -> Array[
+impl Theme for DocsTheme with fn sort_pages(_self, pages : Array[PageEntry]) -> Array[
   PageEntry,
 ] {
   pages.sort_by(fn(a : PageEntry, b : PageEntry) -> Int {
@@ -104,7 +104,7 @@ fn parse_order(s : String) -> Double {
 
 ///|
 impl Theme for DocsTheme with fn url_for(
-  self,
+  _self,
   page : PageEntry,
   _all_pages : Array[PageEntry],
 ) -> String {
@@ -116,13 +116,13 @@ impl Theme for DocsTheme with fn url_for(
 }
 
 ///|
-impl Theme for DocsTheme with fn listing_page_title(self) -> String {
+impl Theme for DocsTheme with fn listing_page_title(_self) -> String {
   "Documentation"
 }
 
 ///|
 impl Theme for DocsTheme with fn generate_listing_markdown(
-  self,
+  _self,
   _pages : Array[PageEntry],
 ) -> String {
   // Docs theme uses sidebar navigation, not a listing page
@@ -131,7 +131,7 @@ impl Theme for DocsTheme with fn generate_listing_markdown(
 
 ///|
 impl Theme for DocsTheme with fn generate_nav_html(
-  self,
+  _self,
   pages : Array[PageEntry],
   current_slug : String,
 ) -> String {
@@ -164,7 +164,7 @@ impl Theme for DocsTheme with fn generate_nav_html(
 }
 
 ///|
-impl Theme for DocsTheme with fn page_shell_template(self) -> String {
+impl Theme for DocsTheme with fn page_shell_template(_self) -> String {
   (
     #|<!DOCTYPE html>
     #|<html lang="en">
@@ -195,7 +195,7 @@ impl Theme for DocsTheme with fn page_shell_template(self) -> String {
 }
 
 ///|
-impl Theme for DocsTheme with fn base_css(self) -> String {
+impl Theme for DocsTheme with fn base_css(_self) -> String {
   (
     #|* {
     #|  margin: 0;
@@ -288,14 +288,14 @@ impl Theme for DocsTheme with fn base_css(self) -> String {
 }
 
 ///|
-impl Theme for DocsTheme with fn component_dirs(self) -> Array[String] {
+impl Theme for DocsTheme with fn component_dirs(_self) -> Array[String] {
   [
     "badge", "callout", "card", "grid", "metric", "sidebar", "breadcrumbs", "prev_next",
   ]
 }
 
 ///|
-impl Theme for DocsTheme with fn build_meta_tags(self, page : PageEntry) -> String {
+impl Theme for DocsTheme with fn build_meta_tags(_self, page : PageEntry) -> String {
   let sb = StringBuilder::new()
   let description = page.metadata.get("description").unwrap_or("")
   if description != "" {

@@ -1,0 +1,23 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "xz-xuezhe/moonblox/convert"
+
+import {
+  "mizchi/markdown",
+  "xz-xuezhe/moonblox/ast",
+}
+
+// Values
+pub fn inline_to_md(@markdown.Inline) -> String
+
+pub fn parse_markdown(String) -> @ast.Document
+
+pub fn value_to_json(@ast.Value) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

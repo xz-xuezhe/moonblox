@@ -1659,7 +1659,7 @@ fn remove_dir_all(dir : String) -> Unit raise {
 /// Create directory if it doesn't already exist (idempotent).
 fn ensure_dir(path : String) -> Unit raise {
   if !@fs.path_exists(path) {
-    try! @fs.create_dir(path)
+    @fs.create_dir(path)
   }
 }
 

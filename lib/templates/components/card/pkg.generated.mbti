@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "xz-xuezhe/moonblox/lib/templates/components/card"
+
+import {
+  "moonbit-community/rabbita/html",
+}
+
+// Values
+pub fn card(Array[@html.Html], title? : String, image? : String) -> @html.Html
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

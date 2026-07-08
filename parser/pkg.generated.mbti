@@ -1,0 +1,63 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "xz-xuezhe/moonblox/parser"
+
+import {
+  "moonbitlang/core/debug",
+  "xz-xuezhe/moonblox/ast",
+}
+
+// Values
+pub fn directive(Array[(Token, Int, Int)], initial_pos? : Int) -> (String, Map[String, @ast.Value]) raise ParseError
+
+pub fn parse_container_header(String) -> (String, Map[String, @ast.Value])?
+
+pub fn parse_inline_directive(String) -> (String, Map[String, @ast.Value])?
+
+pub fn parse_structured_header(String) -> (String, Map[String, @ast.Value])?
+
+pub fn tokenize(String) -> Array[(Token, Int, Int)]
+
+// Errors
+pub suberror ParseError {
+  UnexpectedToken(Token, (Int, Int), Array[TokenKind])
+  UnexpectedEndOfInput(Int, Array[TokenKind])
+} derive(@debug.Debug)
+
+// Types and methods
+pub(all) enum Token {
+  IDENT(String)
+  STRING(String)
+  NUMBER(Double)
+  BOOL(Bool)
+  LPAREN
+  RPAREN
+  LBRACKET
+  RBRACKET
+  LBRACE
+  RBRACE
+  COLON
+  COMMA
+} derive(Eq, @debug.Debug)
+pub fn Token::kind(Self) -> TokenKind
+
+pub(all) enum TokenKind {
+  TK_IDENT
+  TK_STRING
+  TK_NUMBER
+  TK_BOOL
+  TK_LPAREN
+  TK_RPAREN
+  TK_LBRACKET
+  TK_RBRACKET
+  TK_LBRACE
+  TK_RBRACE
+  TK_COLON
+  TK_COMMA
+}
+pub impl Show for TokenKind
+pub impl @debug.Debug for TokenKind
+
+// Type aliases
+
+// Traits
+

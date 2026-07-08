@@ -1,0 +1,72 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "xz-xuezhe/moonblox/theme"
+
+// Values
+pub fn html_escape(String) -> String
+
+pub fn new_blog() -> BlogTheme
+
+pub fn new_docs() -> DocsTheme
+
+pub fn resolve_theme(String) -> ThemeKind
+
+pub fn slug_from_filename(String) -> String
+
+pub fn theme_base_css(ThemeKind) -> String
+
+pub fn theme_build_meta_tags(ThemeKind, PageEntry) -> String
+
+pub fn theme_component_dirs(ThemeKind) -> Array[String]
+
+pub fn theme_content_root(ThemeKind) -> String
+
+pub fn theme_discover_pages(ThemeKind, String) -> Array[PageEntry]
+
+pub fn theme_generate_listing_markdown(ThemeKind, Array[PageEntry]) -> String
+
+pub fn theme_generate_nav_html(ThemeKind, Array[PageEntry], String) -> String
+
+pub fn theme_listing_page_title(ThemeKind) -> String
+
+pub fn theme_page_shell_template(ThemeKind) -> String
+
+pub fn theme_sort_pages(ThemeKind, Array[PageEntry]) -> Array[PageEntry]
+
+pub fn theme_url_for(ThemeKind, PageEntry, Array[PageEntry]) -> String
+
+// Errors
+
+// Types and methods
+type BlogTheme
+
+type DocsTheme
+
+pub(all) struct PageEntry {
+  slug : String
+  source_path : String
+  metadata : Map[String, String]
+  content : String
+}
+
+pub enum ThemeKind {
+  Blog(BlogTheme)
+  Docs(DocsTheme)
+}
+
+// Type aliases
+
+// Traits
+pub(open) trait Theme {
+  fn content_root(Self) -> String
+  fn discover_pages(Self, String) -> Array[PageEntry]
+  fn sort_pages(Self, Array[PageEntry]) -> Array[PageEntry]
+  fn url_for(Self, PageEntry, Array[PageEntry]) -> String
+  fn listing_page_title(Self) -> String
+  fn generate_listing_markdown(Self, Array[PageEntry]) -> String
+  fn page_shell_template(Self) -> String
+  fn base_css(Self) -> String
+  fn component_dirs(Self) -> Array[String]
+  fn generate_nav_html(Self, Array[PageEntry], String) -> String
+  fn build_meta_tags(Self, PageEntry) -> String
+}
+

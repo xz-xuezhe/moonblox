@@ -6,8 +6,6 @@ _build/
 # MoonBit
 .moon/
 .mooncakes/
-*.mbti
-
 # Generated
 parser/parser.mbt.map.json
 

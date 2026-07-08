@@ -1,0 +1,20 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "xz-xuezhe/moonblox/render"
+
+import {
+  "moonbit-community/rabbita",
+  "moonbit-community/rabbita/html",
+  "xz-xuezhe/moonblox/ast",
+}
+
+// Values
+pub fn render_document(@ast.Document, inline_cells? : Map[String, (Map[String, @ast.Value]) -> @rabbita.Cell], container_cells? : Map[String, (Map[String, @ast.Value], Array[@html.Html]) -> @rabbita.Cell]) -> @rabbita.Cell
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

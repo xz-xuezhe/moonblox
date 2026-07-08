@@ -2,6 +2,7 @@
 
 ///|
 /// Parse MoonBlox Document to HTML string
+#warnings("-alert_unstable")
 fn render_doc(doc : @ast.Document) -> String {
   @rabbita.render_to_string(render_document(doc))
 }

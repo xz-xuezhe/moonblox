@@ -12,12 +12,12 @@ pub fn new_blog() -> BlogTheme {
 }
 
 ///|
-impl Theme for BlogTheme with fn content_root(self) -> String {
+impl Theme for BlogTheme with fn content_root(_self) -> String {
   "posts"
 }
 
 ///|
-impl Theme for BlogTheme with fn discover_pages(self, content_dir : String) -> Array[
+impl Theme for BlogTheme with fn discover_pages(_self, content_dir : String) -> Array[
   PageEntry,
 ] {
   let entries : Array[PageEntry] = []
@@ -94,7 +94,7 @@ fn date_to_sortable(d : String) -> String {
 }
 
 ///|
-impl Theme for BlogTheme with fn sort_pages(self, pages : Array[PageEntry]) -> Array[
+impl Theme for BlogTheme with fn sort_pages(_self, pages : Array[PageEntry]) -> Array[
   PageEntry,
 ] {
   pages.sort_by(fn(a : PageEntry, b : PageEntry) -> Int {
@@ -113,7 +113,7 @@ impl Theme for BlogTheme with fn sort_pages(self, pages : Array[PageEntry]) -> A
 
 ///|
 impl Theme for BlogTheme with fn url_for(
-  self,
+  _self,
   page : PageEntry,
   _all_pages : Array[PageEntry],
 ) -> String {
@@ -125,13 +125,13 @@ impl Theme for BlogTheme with fn url_for(
 }
 
 ///|
-impl Theme for BlogTheme with fn listing_page_title(self) -> String {
+impl Theme for BlogTheme with fn listing_page_title(_self) -> String {
   "Articles"
 }
 
 ///|
 impl Theme for BlogTheme with fn generate_listing_markdown(
-  self,
+  _self,
   pages : Array[PageEntry],
 ) -> String {
   let sb = StringBuilder::new()
@@ -153,7 +153,7 @@ impl Theme for BlogTheme with fn generate_listing_markdown(
 
 ///|
 impl Theme for BlogTheme with fn generate_nav_html(
-  self,
+  _self,
   _pages : Array[PageEntry],
   _current_slug : String,
 ) -> String {
@@ -162,7 +162,7 @@ impl Theme for BlogTheme with fn generate_nav_html(
 }
 
 ///|
-impl Theme for BlogTheme with fn page_shell_template(self) -> String {
+impl Theme for BlogTheme with fn page_shell_template(_self) -> String {
   (
     #|<!DOCTYPE html>
     #|<html lang="en">
@@ -184,7 +184,7 @@ impl Theme for BlogTheme with fn page_shell_template(self) -> String {
 }
 
 ///|
-impl Theme for BlogTheme with fn base_css(self) -> String {
+impl Theme for BlogTheme with fn base_css(_self) -> String {
   (
     #|body {
     #|  font-family: system-ui, sans-serif;
@@ -234,12 +234,12 @@ impl Theme for BlogTheme with fn base_css(self) -> String {
 }
 
 ///|
-impl Theme for BlogTheme with fn component_dirs(self) -> Array[String] {
+impl Theme for BlogTheme with fn component_dirs(_self) -> Array[String] {
   ["badge", "counter", "callout", "card", "grid", "metric", "chart", "graph"]
 }
 
 ///|
-impl Theme for BlogTheme with fn build_meta_tags(self, page : PageEntry) -> String {
+impl Theme for BlogTheme with fn build_meta_tags(_self, page : PageEntry) -> String {
   let sb = StringBuilder::new()
   let date = page.metadata.get("date").unwrap_or("")
   if date != "" {

@@ -5,22 +5,13 @@
 /// A content page discovered by the theme from the content directory.
 pub(all) struct PageEntry {
   /// Unique identifier for the page, derived from the source filename
-  pub slug : String
+  slug : String
   /// Path relative to the content root directory (e.g., "hello.md", "guide/getting-started.md")
-  pub source_path : String
+  source_path : String
   /// Front matter metadata as key-value string pairs
-  pub metadata : Map[String, String]
+  metadata : Map[String, String]
   /// Raw markdown content
-  pub content : String
-}
-
-///|
-/// A node in the navigation tree (sidebar, breadcrumbs, etc.)
-pub struct NavNode {
-  title : String
-  url : String
-  children : Array[NavNode]
-  order : Double
+  content : String
 }
 
 ///|

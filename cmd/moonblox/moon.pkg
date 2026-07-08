@@ -13,7 +13,6 @@ import {
   "moonbit-community/rabbita_tui" @tui,
   "moonbit-community/rabbita_tui/widgets",
   "moonbitlang/core/immut/vector",
-  "xz-xuezhe/moonblox/convert",
   "xz-xuezhe/moonblox/theme",
 }
 
@@ -56,11 +55,6 @@ options(
       "command": ":embed -i $input -o $output --name callout_css",
       "input": "../../lib/templates/components/callout/callout.css",
       "output": "callout_css.mbt",
-    },
-    {
-      "command": ":embed -i $input -o $output --name page_shell",
-      "input": "../../lib/templates/page_shell.html",
-      "output": "page_shell.mbt",
     },
     {
       "command": ":embed -i $input -o $output --name live_reload_script",
