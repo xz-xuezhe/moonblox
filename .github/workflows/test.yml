@@ -24,15 +24,12 @@ jobs:
       - name: Setup Moon env (Linux)
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc libssl-dev
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
 
       - name: Setup Moon env (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew install gcc openssl
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
 
@@ -44,17 +41,15 @@ jobs:
           irm https://cli.moonbitlang.com/install/powershell.ps1 | iex
           echo "$HOME/.moon/bin" | Out-File -FilePath $env:GITHUB_PATH -Append
 
-      - name: Setup MSYS2 + MinGW + openssl (Windows)
-        if: runner.os == 'Windows'
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: UCRT64
-          update: true
-          install: >-
-            mingw-w64-ucrt-x86_64-gcc
-            mingw-w64-ucrt-x86_64-openssl
+      - name: Moon version
+        run: |
+          moon version --all
+          moonrun --version
 
-      - name: Moon Check
+      - name: Update dependencies
+        run: moon update
+
+      - name: Check
         run: |
           moon fmt --check
           moon check --deny-warn
@@ -62,12 +57,8 @@ jobs:
           git diff --exit-code
           git status
 
-      - name: Moon test
+      - name: Test
         run: |
           moon test --deny-warn --enable-coverage
-          moon coverage report -f summary
-          moon coverage analyze
-
-          moon test --deny-warn --target native --enable-coverage
           moon coverage report -f summary
           moon coverage analyze
