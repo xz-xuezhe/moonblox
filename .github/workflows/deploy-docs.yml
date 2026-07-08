@@ -11,7 +11,7 @@ on:
       - 'convert/**'
       - 'parser/**'
       - 'render/**'
-      - 'lib/templates/**'
+      - 'cmd/moonblox/templates/**'
       - 'moon.mod'
       - 'moon.work'
       - '.github/workflows/deploy-docs.yml'

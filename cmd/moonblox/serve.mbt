@@ -238,9 +238,10 @@ async fn handle_request(
 
 ///|
 fn inject_reload_script(html : String) -> String {
+  let script_tag = "<script>\n" + @embed.live_reload_script + "\n</script>"
   match html.find("</body>") {
     Some(idx) =>
-      html[0:idx].to_owned() + live_reload_script + html[idx:].to_owned()
-    None => html + live_reload_script // no </body> tag, append at end
+      html[0:idx].to_owned() + script_tag + "\n" + html[idx:].to_owned()
+    None => html + script_tag
   }
 }

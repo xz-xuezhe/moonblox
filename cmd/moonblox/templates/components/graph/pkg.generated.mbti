@@ -1,0 +1,18 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "xz-xuezhe/moonblox-cli/templates/components/graph"
+
+import {
+  "moonbit-community/rabbita/html",
+}
+
+// Values
+pub fn graph(value? : Double, max? : Double, label? : String) -> @html.Html
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

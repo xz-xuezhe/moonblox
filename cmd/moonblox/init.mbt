@@ -89,7 +89,7 @@ fn do_scaffold(
   let config_json = if theme == "docs" {
     docs_config
   } else {
-    default_config_json
+    @embed.default_config_json
   }
   let content_dir = if theme == "docs" { "docs" } else { "posts" }
 
@@ -100,59 +100,67 @@ fn do_scaffold(
 
   write(dir, "moonblox.json", config_json, quiet)
   let date = today()
-  let post = sample_post_md.replace(old="__DATE__", new=date)
+  let post = @embed.sample_post_md.replace(old="__DATE__", new=date)
   if !empty {
     write(dir, "\{content_dir}/hello.md", post, quiet)
   }
-  write(dir, "\{THEME_DIR}/base.css", base_css, quiet)
+  write(dir, "\{THEME_DIR}/base.css", @embed.base_css, quiet)
 
   for i = 0; i < components.length(); i = i + 1 {
     let name = components[i]
     match name {
       "badge" =>
         scaffold_component(
-          dir, "badge", badge_mbt, badge_css, badge_moon_pkg, quiet,
+          dir, "badge", @embed.badge_mbt, @embed.badge_css, @embed.badge_moon_pkg,
+          quiet,
         )
       "counter" =>
         scaffold_component(
-          dir, "counter", counter_mbt, counter_css, counter_moon_pkg, quiet,
+          dir, "counter", @embed.counter_mbt, @embed.counter_css, @embed.counter_moon_pkg,
+          quiet,
         )
       "callout" =>
         scaffold_component(
-          dir, "callout", callout_mbt, callout_css, callout_moon_pkg, quiet,
+          dir, "callout", @embed.callout_mbt, @embed.callout_css, @embed.callout_moon_pkg,
+          quiet,
         )
       "card" =>
         scaffold_component(
-          dir, "card", card_mbt, card_css, card_moon_pkg, quiet,
+          dir, "card", @embed.card_mbt, @embed.card_css, @embed.card_moon_pkg, quiet,
         )
       "grid" =>
         scaffold_component(
-          dir, "grid", grid_mbt, grid_css, grid_moon_pkg, quiet,
+          dir, "grid", @embed.grid_mbt, @embed.grid_css, @embed.grid_moon_pkg, quiet,
         )
       "metric" =>
         scaffold_component(
-          dir, "metric", metric_mbt, metric_css, metric_moon_pkg, quiet,
+          dir, "metric", @embed.metric_mbt, @embed.metric_css, @embed.metric_moon_pkg,
+          quiet,
         )
       "chart" =>
         scaffold_component(
-          dir, "chart", chart_mbt, chart_css, chart_moon_pkg, quiet,
+          dir, "chart", @embed.chart_mbt, @embed.chart_css, @embed.chart_moon_pkg,
+          quiet,
         )
       "graph" =>
         scaffold_component(
-          dir, "graph", graph_mbt, graph_css, graph_moon_pkg, quiet,
+          dir, "graph", @embed.graph_mbt, @embed.graph_css, @embed.graph_moon_pkg,
+          quiet,
         )
       "sidebar" =>
         scaffold_component(
-          dir, "sidebar", sidebar_mbt, sidebar_css, sidebar_moon_pkg, quiet,
+          dir, "sidebar", @embed.sidebar_mbt, @embed.sidebar_css, @embed.sidebar_moon_pkg,
+          quiet,
         )
       "breadcrumbs" =>
         scaffold_component(
-          dir, "breadcrumbs", breadcrumbs_mbt, breadcrumbs_css, breadcrumbs_moon_pkg,
+          dir, "breadcrumbs", @embed.breadcrumbs_mbt, @embed.breadcrumbs_css, @embed.breadcrumbs_moon_pkg,
           quiet,
         )
       "prev_next" =>
         scaffold_component(
-          dir, "prev_next", prev_next_mbt, prev_next_css, prev_next_moon_pkg, quiet,
+          dir, "prev_next", @embed.prev_next_mbt, @embed.prev_next_css, @embed.prev_next_moon_pkg,
+          quiet,
         )
       _ => if !quiet { println("  (skip unknown component: \{name})") }
     }

@@ -1,0 +1,86 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "xz-xuezhe/moonblox-cli/embed"
+
+// Values
+pub let badge_css : String
+
+pub let badge_mbt : String
+
+pub let badge_moon_pkg : String
+
+pub let base_css : String
+
+pub let breadcrumbs_css : String
+
+pub let breadcrumbs_mbt : String
+
+pub let breadcrumbs_moon_pkg : String
+
+pub let callout_css : String
+
+pub let callout_mbt : String
+
+pub let callout_moon_pkg : String
+
+pub let card_css : String
+
+pub let card_mbt : String
+
+pub let card_moon_pkg : String
+
+pub let chart_css : String
+
+pub let chart_mbt : String
+
+pub let chart_moon_pkg : String
+
+pub let counter_css : String
+
+pub let counter_mbt : String
+
+pub let counter_moon_pkg : String
+
+pub let default_config_json : String
+
+pub let graph_css : String
+
+pub let graph_mbt : String
+
+pub let graph_moon_pkg : String
+
+pub let grid_css : String
+
+pub let grid_mbt : String
+
+pub let grid_moon_pkg : String
+
+pub let live_reload_script : String
+
+pub let metric_css : String
+
+pub let metric_mbt : String
+
+pub let metric_moon_pkg : String
+
+pub let prev_next_css : String
+
+pub let prev_next_mbt : String
+
+pub let prev_next_moon_pkg : String
+
+pub let sample_post_md : String
+
+pub let sidebar_css : String
+
+pub let sidebar_mbt : String
+
+pub let sidebar_moon_pkg : String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

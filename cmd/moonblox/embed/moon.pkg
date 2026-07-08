@@ -1,0 +1,191 @@
+supported_targets = "native"
+
+options(
+  "pre-build": [
+    {
+      "command": ":embed -i $input -o $output --name _base_css",
+      "input": "../templates/theme/base.css",
+      "output": "base_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _badge_mbt",
+      "input": "../templates/components/badge/badge.mbt",
+      "output": "badge_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _badge_css",
+      "input": "../templates/components/badge/badge.css",
+      "output": "badge_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _counter_mbt",
+      "input": "../templates/components/counter/counter.mbt",
+      "output": "counter_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _counter_css",
+      "input": "../templates/components/counter/counter.css",
+      "output": "counter_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _callout_mbt",
+      "input": "../templates/components/callout/callout.mbt",
+      "output": "callout_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _callout_css",
+      "input": "../templates/components/callout/callout.css",
+      "output": "callout_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _live_reload_script",
+      "input": "../templates/live_reload.js",
+      "output": "live_reload_script.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _sample_post_md",
+      "input": "../templates/sample_post.md",
+      "output": "sample_post_md.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _default_config_json",
+      "input": "../templates/moonblox.json",
+      "output": "default_config_json.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _badge_moon_pkg",
+      "input": "../templates/components/badge/moon.pkg",
+      "output": "badge_moon_pkg.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _counter_moon_pkg",
+      "input": "../templates/components/counter/moon.pkg",
+      "output": "counter_moon_pkg.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _callout_moon_pkg",
+      "input": "../templates/components/callout/moon.pkg",
+      "output": "callout_moon_pkg.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _card_mbt",
+      "input": "../templates/components/card/card.mbt",
+      "output": "card_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _card_css",
+      "input": "../templates/components/card/card.css",
+      "output": "card_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _card_moon_pkg",
+      "input": "../templates/components/card/moon.pkg",
+      "output": "card_moon_pkg.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _grid_mbt",
+      "input": "../templates/components/grid/grid.mbt",
+      "output": "grid_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _grid_css",
+      "input": "../templates/components/grid/grid.css",
+      "output": "grid_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _grid_moon_pkg",
+      "input": "../templates/components/grid/moon.pkg",
+      "output": "grid_moon_pkg.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _metric_mbt",
+      "input": "../templates/components/metric/metric.mbt",
+      "output": "metric_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _metric_css",
+      "input": "../templates/components/metric/metric.css",
+      "output": "metric_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _metric_moon_pkg",
+      "input": "../templates/components/metric/moon.pkg",
+      "output": "metric_moon_pkg.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _chart_mbt",
+      "input": "../templates/components/chart/chart.mbt",
+      "output": "chart_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _chart_css",
+      "input": "../templates/components/chart/chart.css",
+      "output": "chart_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _chart_moon_pkg",
+      "input": "../templates/components/chart/moon.pkg",
+      "output": "chart_moon_pkg.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _graph_mbt",
+      "input": "../templates/components/graph/graph.mbt",
+      "output": "graph_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _graph_css",
+      "input": "../templates/components/graph/graph.css",
+      "output": "graph_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _graph_moon_pkg",
+      "input": "../templates/components/graph/moon.pkg",
+      "output": "graph_moon_pkg.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _sidebar_mbt",
+      "input": "../templates/components/sidebar/sidebar.mbt",
+      "output": "sidebar_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _sidebar_css",
+      "input": "../templates/components/sidebar/sidebar.css",
+      "output": "sidebar_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _sidebar_moon_pkg",
+      "input": "../templates/components/sidebar/moon.pkg",
+      "output": "sidebar_moon_pkg.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _breadcrumbs_mbt",
+      "input": "../templates/components/breadcrumbs/breadcrumbs.mbt",
+      "output": "breadcrumbs_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _breadcrumbs_css",
+      "input": "../templates/components/breadcrumbs/breadcrumbs.css",
+      "output": "breadcrumbs_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _breadcrumbs_moon_pkg",
+      "input": "../templates/components/breadcrumbs/moon.pkg",
+      "output": "breadcrumbs_moon_pkg.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _prev_next_mbt",
+      "input": "../templates/components/prev_next/prev_next.mbt",
+      "output": "prev_next_mbt.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _prev_next_css",
+      "input": "../templates/components/prev_next/prev_next.css",
+      "output": "prev_next_css.mbt",
+    },
+    {
+      "command": ":embed -i $input -o $output --name _prev_next_moon_pkg",
+      "input": "../templates/components/prev_next/moon.pkg",
+      "output": "prev_next_moon_pkg.mbt",
+    },
+  ],
+)
