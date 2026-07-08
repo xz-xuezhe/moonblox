@@ -51,6 +51,14 @@ Regular **Markdown** content here.
 - **Container** `:::name(args)` — wrap Markdown content in a component
 - **Structured block** `::name { model } body ::` — share state across multiple components
 
+## Library
+
+To use MoonBlox as a MoonBit library:
+
+```bash
+moon add xz-xuezhe/moonblox
+```
+
 ## Documentation
 
 Full docs at **[xz-xuezhe.github.io/moonblox](https://xz-xuezhe.github.io/moonblox/)**:
