@@ -11,8 +11,6 @@ Write Markdown, embed interactive components in MoonBit, and `moonblox-cli build
 
 ## Features
 
-@badge(text: "v0.1.0", tone: "info")
-
 - **Markdown-first** — Write content in Markdown with YAML front matter
 - **Interactive Components** — Embed MoonBit components with `@name(args)` syntax
 - **Container Blocks** — Wrap Markdown in styled containers with `:::name(args)`
