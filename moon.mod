@@ -36,5 +36,4 @@ options(
     "openspec",
     "tests",
   ],
-  "bin-deps": { "moonbitlang/yacc": "0.7.13" },
 )

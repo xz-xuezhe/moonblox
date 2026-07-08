@@ -53,7 +53,7 @@ pub(all) enum TokenKind {
   TK_RBRACE
   TK_COLON
   TK_COMMA
-}
+} derive(Eq)
 pub impl Show for TokenKind
 pub impl @debug.Debug for TokenKind
 
